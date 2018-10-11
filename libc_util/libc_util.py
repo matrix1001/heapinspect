@@ -5,6 +5,7 @@ import subprocess
 import json
 import os
 
+
 def build_helper(out_dir, size_t=8):
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     arch = ''
@@ -19,7 +20,7 @@ def build_helper(out_dir, size_t=8):
 
 def get_libc_version(path):
     content = open(path).read()
-    pattern = "libc-([0-9]+\.[0-9]+)\.so"
+    pattern = "libc[- ]([0-9]+\.[0-9]+)"
     result = re.findall(pattern, content)
     if result:
         return result[0]
@@ -50,11 +51,15 @@ def get_arena_info(libc_path, size_t=8):
     return dc.decode(result)
 
 def get_libc_info(libc_path):
+    new_versions = ['2.27', '2.28']
     info = {'version':get_libc_version(libc_path)}
     info.update(get_arena_info(libc_path))
+    if info['version'] in new_versions:
+        
+        info['main_arena_offset'] = info['main_arena_offset']-8
     return info
     
-
 if __name__ == '__main__':
-    t = get_arena_info('./libc.so.6')
-    print(t)
+    #t = get_arena_info('./libc.so.6')
+    #print(t)
+    pass
