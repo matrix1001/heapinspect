@@ -27,7 +27,7 @@ void* main_arena_offset() {
   void *z = malloc(SZ); // prevent p merge with top chunk
   *p = z; // prevent compiler optimize
   free(p); // now *p must be the pointer of the (chunk_ptr) unsorted bin
-  z = (void*)((*p) - (4 + 4 + SZ * 10)); // mutex+flags+fastbin[]
+  z = (void*)((*p) - (4 + 4 + SZ * 10)); // mutex+flags+fastbin[] 2.23-2.26, 2.27+ need to -8
   void* a = search_head((size_t)__builtin_return_address(1));
   return (void*)(z - a);
 }

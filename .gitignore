@@ -1,1 +1,3 @@
 *.pyc
+libc_info
+.vscode
