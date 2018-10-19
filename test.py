@@ -93,20 +93,34 @@ class HeapInspector(object):
             fastbin_ptr = fastbin_head
             lst = []
             while fastbin_ptr:
-                lst.append(fastbin_ptr)
-                mem = self.proc.read(fastbin_head, 0x20)
+                
+                mem = self.proc.read(fastbin_ptr, 0x20)
                 chunk = malloc_chunk(mem)
+                lst.append(chunk)
                 fd = chunk.fd
                 fastbin_ptr = fd
 
             result[index*0x10+0x20] = lst
 
         return result
+
+    @property
+    def unsortedbins(self):
+        result = []
+        unsorted_ptr = self.main_arena.last_remainder
+        while unsorted_ptr:
+            mem = self.proc.read(unsorted_ptr, 0x20)
+            chunk = malloc_chunk(mem)
+            lst.append(chunk)
+            fd = chunk.fd
+            bk = chunk.bk
+            unsorted_ptr = fd
             
 
 if __name__ == '__main__':
     hi = HeapInspector(21411)
     for chunk in hi.heap_chunks:
         print("chunk: psize={} size={} fd={} bk={}".format(hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
+    
     
 
