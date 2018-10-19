@@ -44,26 +44,69 @@ class malloc_chunk(object):
             #self.fd_nextsize = u64(memdump[32:40])
             #self.bk_nextsize = u64(memdump[40:48])
 
-def heap_chunk_looper(heap_mem, arch='64'):
-    cur_pos = 0
-    while cur_pos < len(heap_mem):
-        cur_block_size = u64(heap_mem[cur_pos+0x8:cur_pos+0x10]) & ~0b111
-        memblock = heap_mem[cur_pos:cur_pos+cur_block_size]
-        cur_pos = (cur_pos+cur_block_size) & ~0b1111
-        yield malloc_chunk(memblock)
+class HeapInspector(object):
+    def __init__(self, pid):
+        self.pid = pid
+        self.proc = Proc(pid)
+        self.libc_path = self.proc.libc
+        self.libc_info = get_libc_info(self.libc_path)
+
+    @property
+    def heapmem(self):
+        start, end = 0xffffffffffffffffff, 0
+        for m in self.proc.vmmap:
+            if m.mapname == '[heap]':
+                if m.start < start:
+                    start = m.start
+                if m.end > end:
+                    end = m.end
+        return self.proc.read(start, end-start)
+
+    @property
+    def arenamem(self):
+        libc_base = self.proc.bases['libc']
+        arena_size = 0x898
+        arena_addr = libc_base + self.libc_info['main_arena_offset']
+        return self.proc.read(arena_addr, arena_size)
+
+    @property
+    def main_arena(self):
+        return malloc_state(self.arenamem)
+
+    @property
+    def heap_chunks(self):
+        heap_mem = self.heapmem
+        cur_pos = 0
+        result = []
+        while cur_pos < len(heap_mem):
+            cur_block_size = u64(heap_mem[cur_pos+0x8:cur_pos+0x10]) & ~0b111
+            memblock = heap_mem[cur_pos:cur_pos+cur_block_size]
+            cur_pos = (cur_pos+cur_block_size) & ~0b1111
+            result.append(malloc_chunk(memblock))
+
+        return result
+
+    @property
+    def fastbins(self):
+        result = {}
+        for index, fastbin_head in enumerate(self.main_arena.fastbinsY):
+            fastbin_ptr = fastbin_head
+            lst = []
+            while fastbin_ptr:
+                lst.append(fastbin_ptr)
+                mem = self.proc.read(fastbin_head, 0x20)
+                chunk = malloc_chunk(mem)
+                fd = chunk.fd
+                fastbin_ptr = fd
+
+            result[index*0x10+0x20] = lst
+
+        return result
+            
 
 if __name__ == '__main__':
-    p = Proc(21411)
-    libc = p.libc
-    libc_info = get_libc_info(libc)
-    libc_base = p.bases['libc']
-
-    main_arena_mem = p.read(libc_base + libc_info['main_arena_offset'], 0x898)
-    main_arena = malloc_state(main_arena_mem)
-
-    heap_base = p.bases['heap']
-    heap_mem = p.read(heap_base, main_arena.top-heap_base)
-    for chunk in heap_chunk_looper(heap_mem):
+    hi = HeapInspector(21411)
+    for chunk in hi.heap_chunks:
         print("chunk: psize={} size={} fd={} bk={}".format(hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
     
 

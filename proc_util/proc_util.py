@@ -33,6 +33,9 @@ class Proc(object):
     def path(self):
         return os.path.realpath("/proc/{}/exe".format(self.pid))
     @property
+    def vmmap(self):
+        return vmmap(self.pid)
+    @property
     def bases(self):
         '''
         get program, libc, heap, stack bases
