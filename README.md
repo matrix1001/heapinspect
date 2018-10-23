@@ -10,7 +10,12 @@ However I'm starting to work on it. Code is ugly, functions are not complete.
 
 # Devlog
 
-2018/10/22 version 0.02
+2018/10/23 version 0.0.3
+
+- `fastbin` prototype
+- `unsortedbin` prototype
+
+2018/10/22 version 0.0.2
 
 - add `C_Struct` to handle c structure
 
