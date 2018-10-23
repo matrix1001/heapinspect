@@ -1,3 +1,6 @@
 *.pyc
 libc_info
 .vscode
+test.c
+a.out
+.gdb_history

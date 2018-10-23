@@ -43,6 +43,15 @@ struct malloc_chunk
     ptr bk_nextsize;
 }
 '''
+
+tcache_perthread_struct = '''
+struct tcache_perthread_struct
+{
+    char counts[64];
+    ptr entries[64];
+}
+'''
+
 class C_Struct(object):
     def __init__(self, code, arch='64', endian='little'):
         if arch == '64':
@@ -170,6 +179,7 @@ class C_Struct(object):
 
 MallocState = C_Struct(malloc_state_struct)
 MallocChunk = C_Struct(malloc_chunk_struct)
+TcacheStruct = C_Struct(tcache_perthread_struct)
 
 class HeapInspector(object):
     def __init__(self, pid):
@@ -203,6 +213,16 @@ class HeapInspector(object):
         return MallocState._new(self.arenamem, arena_addr)
 
     @property
+    def tcache(self):
+        if self.libc_info['tcache_enable']:
+            base_addr = self.proc.bases['heap'] + 0x10
+            
+            mem = self.proc.read(base_addr, TcacheStruct._size)
+            return TcacheStruct._new(mem, base_addr)
+        else:
+            return None
+
+    @property
     def heap_chunks(self):
         heap_mem = self.heapmem
         heap_base = self.proc.bases['heap']
@@ -214,6 +234,23 @@ class HeapInspector(object):
             result.append(MallocChunk._new(memblock, cur_pos + heap_base))
             cur_pos = (cur_pos+cur_block_size) & ~0b1111
             
+
+        return result
+
+    @property
+    def tcache_chunks(self):
+        result = {}
+        for index, entry_ptr in enumerate(self.tcache.entries):
+            lst = []
+            while entry_ptr:
+                
+                mem = self.proc.read(entry_ptr-0x10, 0x20)
+                chunk = MallocChunk._new(mem, entry_ptr-0x10)
+                lst.append(chunk)
+                entry_ptr = chunk.fd
+
+            if lst != []:
+                result[index*0x10+0x20] = lst
 
         return result
 
@@ -294,6 +331,7 @@ if __name__ == '__main__':
     show_chunks(hi.fastbins, 'fastbin')
     show_chunks(hi.unsortedbins, 'unsortedbins')
     show_chunks(hi.bins, 'bins')
+    show_chunks(hi.tcache_chunks, 'tcache')
     
     
 
