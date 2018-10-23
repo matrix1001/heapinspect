@@ -1,9 +1,8 @@
 from proc_util import *
 from libc_util import *
 import struct
-import ctypes
 import re
-import copy
+import sys
 
 def u64(data):
     return struct.unpack('<Q', data.ljust(8, '\0'))[0]
@@ -40,6 +39,8 @@ struct malloc_chunk
     size_t size;
     ptr fd;
     ptr bk;
+    ptr fd_nextsize;
+    ptr bk_nextsize;
 }
 '''
 class C_Struct(object):
@@ -230,7 +231,8 @@ class HeapInspector(object):
                 fd = chunk.fd
                 fastbin_ptr = fd
 
-            result[index*0x10+0x20] = lst
+            if lst != []:
+                result[index*0x10+0x20] = lst
 
         return result
 
@@ -238,8 +240,6 @@ class HeapInspector(object):
     def unsortedbins(self):
         result = []
         unsorted_chunk_addr = self.main_arena._addrof('bins[0]') - 0x10
-        
-
         chunk_ptr = unsorted_chunk_addr
         chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
         while chunk.fd != unsorted_chunk_addr:
@@ -249,28 +249,51 @@ class HeapInspector(object):
         
         return result
 
+    @property
+    def bins(self):
+        result = {}
+        for index in range(len(self.main_arena.bins)/2):
+            lst = []
+            head_chunk_addr = self.main_arena._addrof('bins[{}]'.format(index*2)) - 0x10
+            chunk_ptr = head_chunk_addr
+            chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
+            while chunk.fd != head_chunk_addr:
+                chunk_ptr = chunk.fd
+                chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
+                lst.append(chunk)
+            
+            if lst != []:
+                result[index] = lst
+
+        return result
+
+
+
+
 def show_chunks(chunks, banner=''):
     if type(chunks) == dict:
         for header in sorted(chunks.iterkeys()):
             if type(header) == int:
-                print("========{} {}========".format(banner, hex(header)))
+                print('='*30 + '{:^20}'.format(banner+' '+hex(header)) + '='*30)
             else:
-                print("========{} {}========".format(banner, header))
+                print('='*30 + '{:^20}'.format(banner+' '+header) + '='*30)
             for chunk in chunks[header]:
-                print("chunk({}): prev_size={} size={} fd={} bk={}".format(hex(chunk._addr), hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
+                print("chunk({:<15}): prev_size={:<8} size={:<8} fd={:<15} bk={:<15}".format(hex(chunk._addr), hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
 
     elif type(chunks) == list:
-        print("========{}========".format(banner))
+        print('='*30 + '{:^20}'.format(banner) + '='*30)
         for chunk in chunks:
-            print("chunk({}): prev_size={} size={} fd={} bk={}".format(hex(chunk._addr), hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
+            print("chunk({:<15}): prev_size={:<8} size={:<8} fd={:<15} bk={:<15}".format(hex(chunk._addr), hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
             
 
 
 if __name__ == '__main__':
-    hi = HeapInspector(8463)
+    pid = int(sys.argv[1])
+    hi = HeapInspector(pid)
     show_chunks(hi.heap_chunks, 'heapchunks')
-    show_chunks(hi.unsortedbins, 'unsortedbins')
     show_chunks(hi.fastbins, 'fastbin')
+    show_chunks(hi.unsortedbins, 'unsortedbins')
+    show_chunks(hi.bins, 'bins')
     
     
 
