@@ -2,6 +2,8 @@ import re
 import os
 import six
 import codecs
+
+LIBC_REGEX = '^[/\w-]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
 class Map(object):
     def __init__(self, start, end, perm, mapname):
         self.start = start
@@ -50,7 +52,7 @@ class Proc(object):
         for m in maps[::-1]:   #search backward to ensure getting the base
             if m.mapname == 'mapped':    
                 bases['mapped'] = m.start
-            if m.mapname.endswith('.so'):
+            if re.match(LIBC_REGEX, m.mapname):
                 bases['libc'] = m.start
             if m.mapname == exe:
                 bases['base'] = m.start
@@ -137,7 +139,7 @@ class Proc(object):
     @property
     def libc(self):
         for m in vmmap(self.pid):
-            if m.mapname.endswith('.so'):
+            if re.match(LIBC_REGEX, m.mapname):
                 return m.mapname
 
 if __name__ == '__main__':
