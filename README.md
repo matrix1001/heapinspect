@@ -10,6 +10,10 @@ However I'm starting to work on it. Code is ugly, functions are not complete.
 
 # Devlog
 
+2018/10/22 version 0.02
+
+- add `C_Struct` to handle c structure
+
 2018/10/19 version 0.0.1
 
 - add `class HeapInspector`
