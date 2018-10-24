@@ -43,6 +43,11 @@ Oh, I forgot to mention that I'm developing it in `libc-2.27`. Other libc suppor
 
 # Devlog
 
+2018/10/24 version 0.04
+
+- `HeapRecoder` , I will make a heapdiff
+- `smallbins` and `largebins`
+
 2018/10/23 version 0.0.3
 
 - `fastbin` prototype
