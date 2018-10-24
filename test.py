@@ -13,6 +13,7 @@ def p64(i):
 def p32(i):
     return struct.pack('<I', i)
 
+
 malloc_state_struct = '''
 struct malloc_state
 {
@@ -142,6 +143,12 @@ class C_Struct(object):
         self._mem = memdump
         self._addr = addr
 
+
+    def _copy(self):
+        new_obj = C_Struct(self._code, self._arch, self._endian)
+        new_obj._init(self._mem, self._addr)
+        return new_obj
+
     def _new(self, memdump, addr = 0):
         new_obj = C_Struct(self._code, self._arch, self._endian)
         new_obj._init(memdump, addr)
@@ -190,13 +197,7 @@ class HeapInspector(object):
 
     @property
     def heapmem(self):
-        start, end = 0xffffffffffffffffff, 0
-        for m in self.proc.vmmap:
-            if m.mapname == '[heap]':
-                if m.start < start:
-                    start = m.start
-                if m.end > end:
-                    end = m.end
+        start, end = self.proc.ranges['heap'][0]
         return self.proc.read(start, end-start)
 
     @property
@@ -275,21 +276,16 @@ class HeapInspector(object):
 
     @property
     def unsortedbins(self):
-        result = []
-        unsorted_chunk_addr = self.main_arena._addrof('bins[0]') - 0x10
-        chunk_ptr = unsorted_chunk_addr
-        chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
-        while chunk.fd != unsorted_chunk_addr:
-            chunk_ptr = chunk.fd
-            chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
-            result.append(chunk)
-        
-        return result
+        result = self.bins(0, 1)
+        if result != {}:
+            return result[0]
+        else:
+            return {}
 
-    @property
-    def bins(self):
+    def bins(self, start=0, end=127):
         result = {}
-        for index in range(len(self.main_arena.bins)/2):
+        for index in range(start, end): #len(self.main_arena.bins)/2
+            
             lst = []
             head_chunk_addr = self.main_arena._addrof('bins[{}]'.format(index*2)) - 0x10
             chunk_ptr = head_chunk_addr
@@ -304,7 +300,34 @@ class HeapInspector(object):
 
         return result
 
+    @property
+    def smallbins(self):
+        return self.bins(1, 63)
 
+    @property
+    def largebins(self):
+        return self.bins(63, 127)
+
+
+    @property
+    def record(self):
+        return HeapRecorder(self)
+
+class HeapRecorder(object):
+    def __init__(self, hi, heap_base=0, libc_base=0):
+        self._main_arena = hi.main_arena
+        self._heap_chunks = hi.heap_chunks
+        self._fastbins = hi.fastbins
+        self._unsortedbins = hi.unsortedbins
+        self._smallbins = hi.smallbins
+        self._largebins = hi.largebins
+        self._tcache = hi.tcache_chunks
+
+        self._heap_base = heap_base
+        self._libc_base = libc_base
+
+
+    
 
 
 def show_chunks(chunks, banner=''):
@@ -327,11 +350,13 @@ def show_chunks(chunks, banner=''):
 if __name__ == '__main__':
     pid = int(sys.argv[1])
     hi = HeapInspector(pid)
-    show_chunks(hi.heap_chunks, 'heapchunks')
-    show_chunks(hi.fastbins, 'fastbin')
-    show_chunks(hi.unsortedbins, 'unsortedbins')
-    show_chunks(hi.bins, 'bins')
-    show_chunks(hi.tcache_chunks, 'tcache')
+    r = hi.record
+    show_chunks(r._heap_chunks, 'heapchunks')
+    show_chunks(r._fastbins, 'fastbin')
+    show_chunks(r._unsortedbins, 'unsortedbins')
+    show_chunks(r._smallbins, 'smallbins')
+    show_chunks(r._largebins, 'largebins')
+    show_chunks(r._tcache, 'tcache')
     
     
 

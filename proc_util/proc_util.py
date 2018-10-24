@@ -132,6 +132,10 @@ class Proc(object):
         return ''
     
     def read(self, addr, size):
+        if type(addr) == str:
+            if '0x' in addr or '0X' in addr: addr = int(addr, 16)
+            else: addr = int(addr)
+        
         mem = "/proc/{}/mem".format(self.pid)
         f = open(mem)
         f.seek(addr)
