@@ -12,6 +12,14 @@ class Map(object):
         self.mapname = mapname
     def __repr__(self):
         return 'Map("{}", {}, {}, "{}")'.format(self.mapname, hex(self.start), hex(self.end), self.perm)
+
+    @property
+    def range(self):
+        return (self.start, self.end)
+
+    def isin(self, addr):
+        return addr >= self.start and addr < self.end
+    
 def vmmap(pid):
     # this code is converted from vmmap of peda
     maps = [] 
@@ -37,31 +45,92 @@ class Proc(object):
     @property
     def vmmap(self):
         return vmmap(self.pid)
+    def _range_merge(self, lst, range_vec):
+        merged = 0
+        for i, r in enumerate(lst):
+            start, end = r
+            if start == range_vec[1]:
+                lst[i][0] = range_vec[0]
+                merged = 1
+                break
+            elif end == range_vec[0]:
+                lst[i][1] = range_vec[1]
+                merged = 1
+                break
+        if not merged:
+            lst.append(range_vec)
+
+        return lst
+    @property
+    def ranges(self):
+        # TODO: non consistent segment
+        ranges = {'mapped':[],
+                'libc':[],
+                'prog':[],
+                'heap':[],
+                'stack':[],}
+        maps = self.vmmap
+        for m in maps:
+            if m.mapname == 'mapped':
+                name = 'mapped'
+                ranges[name] = self._range_merge(ranges[name], [m.start, m.end])
+            elif re.match(LIBC_REGEX, m.mapname):
+                name = 'libc'
+                ranges[name] = self._range_merge(ranges[name], [m.start, m.end])
+            elif m.mapname == self.path:
+                name = 'prog'
+                ranges[name] = self._range_merge(ranges[name], [m.start, m.end])
+            elif m.mapname == '[stack]':
+                name = 'stack'
+                ranges[name] = self._range_merge(ranges[name], [m.start, m.end])
+            elif m.mapname == '[heap]':
+                name = 'heap'
+                ranges[name] = self._range_merge(ranges[name], [m.start, m.end])
+            else: #non default ones
+                name = os.path.basename(m.mapname)
+                if name not in ranges:
+                    ranges[name] = [[m.start, m.end],]
+                else:
+                    ranges[name] = self._range_merge(ranges[name], [m.start, m.end])
+        return ranges
     @property
     def bases(self):
         '''
         get program, libc, heap, stack bases
         '''
-        exe = self.path
         bases = {'mapped':0,
                 'libc':0,
-                'base':0,
+                'prog':0,
                 'heap':0,
                 'stack':0,}
-        maps = vmmap(self.pid)
+        maps = self.vmmap
         for m in maps[::-1]:   #search backward to ensure getting the base
             if m.mapname == 'mapped':    
                 bases['mapped'] = m.start
-            if re.match(LIBC_REGEX, m.mapname):
+            elif re.match(LIBC_REGEX, m.mapname):
                 bases['libc'] = m.start
-            if m.mapname == exe:
-                bases['base'] = m.start
-            if m.mapname == '[stack]':
+            elif m.mapname == self.path:
+                bases['prog'] = m.start
+            elif m.mapname == '[stack]':
                 bases['stack'] = m.start
-            if m.mapname == '[heap]':
+            elif m.mapname == '[heap]':
                 bases['heap'] = m.start
+            else:
+                name = os.path.basename(m.mapname)
+                bases[name] = m.start
         return bases
 
+    def whereis(self, addr):
+        for m in self.vmmap:
+            if m.isin(addr):
+                if m.mapname == 'mapped': return 'mapped'
+                if re.match(LIBC_REGEX, m.mapname): return 'libc'
+                if m.mapname == self.path: return 'prog'
+                if m.mapname == '[stack]': return 'stack'
+                if m.mapname == '[heap]': return 'heap'
+                return os.path.basename(m.mapname)
+        return ''
+    
     def read(self, addr, size):
         mem = "/proc/{}/mem".format(self.pid)
         f = open(mem)
