@@ -16,26 +16,73 @@ This is an early access view!
 heapinspect $ python test.py 12408
 
 ==============================     heapchunks     ==============================
-chunk(0x55fa6d3a2000 ): prev_size=0x0      size=0x251    fd=0x3             bk=0x0
-chunk(0x55fa6d3a2250 ): prev_size=0x0      size=0x21     fd=0x0             bk=0x0
-chunk(0x55fa6d3a2270 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a2260  bk=0x0
-chunk(0x55fa6d3a2290 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a2280  bk=0x0
-chunk(0x55fa6d3a22b0 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a22a0  bk=0x0
-chunk(0x55fa6d3a22d0 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a22c0  bk=0x0
-chunk(0x55fa6d3a22f0 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a22e0  bk=0x0
-chunk(0x55fa6d3a2310 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a2300  bk=0x0
-chunk(0x55fa6d3a2330 ): prev_size=0x0      size=0x411    fd=0x7f54b9684330  bk=0x7f54b9684330
-chunk(0x55fa6d3a2740 ): prev_size=0x7f54b9683ca0 size=0x1b11   fd=0x7f54b9683ca0  bk=0x7f54b9683ca0
-chunk(0x55fa6d3a4250 ): prev_size=0x1b10   size=0x20     fd=0x0             bk=0x0
-chunk(0x55fa6d3a4270 ): prev_size=0x0      size=0x1ed91  fd=0x0             bk=0x0
+chunk(0x555555559000): prev_size=0x0      size=0x251    fd=0x7             bk=0x0
+chunk(0x555555559250): prev_size=0x0      size=0x21     fd=0x0             bk=0x0
+chunk(0x555555559270): prev_size=0x0      size=0x21     fd=0x555555559260  bk=0x0
+chunk(0x555555559290): prev_size=0x0      size=0x21     fd=0x555555559280  bk=0x0
+chunk(0x5555555592b0): prev_size=0x0      size=0x21     fd=0x5555555592a0  bk=0x0
+chunk(0x5555555592d0): prev_size=0x0      size=0x21     fd=0x5555555592c0  bk=0x0
+chunk(0x5555555592f0): prev_size=0x0      size=0x21     fd=0x5555555592e0  bk=0x0
+chunk(0x555555559310): prev_size=0x0      size=0x21     fd=0x555555559300  bk=0x0
+chunk(0x555555559330): prev_size=0x0      size=0x411    fd=0x7ffff7fa6190  bk=0x555555559c50
+chunk(0x555555559740): prev_size=0x5555.. size=0x401    fd=0x7ffff7fa5ca0  bk=0x7ffff7fa5ca0
+chunk(0x555555559b40): prev_size=0x400    size=0x110    fd=0x7ffff7fa62f0  bk=0x7ffff7fa62f0
+chunk(0x555555559c50): prev_size=0x0      size=0x821    fd=0x7ffff7fa6190  bk=0x55555555a580
+chunk(0x55555555a470): prev_size=0x820    size=0x110    fd=0x7ffff7fa62a0  bk=0x7ffff7fa62a0
+chunk(0x55555555a580): prev_size=0x5555.. size=0x831    fd=0x555555559c50  bk=0x7ffff7fa6190
+chunk(0x55555555adb0): prev_size=0x830    size=0x110    fd=0x7ffff7fa60b0  bk=0x7ffff7fa60b0
+chunk(0x55555555aec0): prev_size=0x5555.. size=0x211    fd=0x7ffff7fa6000  bk=0x7ffff7fa6000
+chunk(0x55555555b0d0): prev_size=0x0      size=0x161    fd=0x7ffff7fa5df0  bk=0x7ffff7fa5df0
+chunk(0x55555555b230): prev_size=0x160    size=0x20     fd=0x0             bk=0x0
+chunk(0x55555555b250): prev_size=0x0      size=0x21     fd=0x7ffff7fa5cb0  bk=0x7ffff7fa5cb0
+chunk(0x55555555b270): prev_size=0x20     size=0x20     fd=0x0             bk=0x0
+chunk(0x55555555b290): prev_size=0x0      size=0x111    fd=0x0             bk=0x0
+chunk(0x55555555b3a0): prev_size=0x0      size=0x1ec61  fd=0x0             bk=0x0
 ==============================    unsortedbins    ==============================
-chunk(0x55fa6d3a2740 ): prev_size=0x7f54b9683ca0 size=0x1b11   fd=0x7f54b9683ca0  bk=0x7f54b9683ca0
-==============================      bins 0x0      ==============================
-chunk(0x55fa6d3a2740 ): prev_size=0x7f54b9683ca0 size=0x1b11   fd=0x7f54b9683ca0  bk=0x7f54b9683ca0
-==============================    tcache 0x20     ==============================
-chunk(0x55fa6d3a2290 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a2280  bk=0x0
-chunk(0x55fa6d3a2270 ): prev_size=0x0      size=0x21     fd=0x55fa6d3a2260  bk=0x0
-chunk(0x55fa6d3a2250 ): prev_size=0x0      size=0x21     fd=0x0             bk=0x0
+chunk(0x555555559740): prev_size=0x5555.. size=0x401    fd=0x7ffff7fa5ca0  bk=0x7ffff7fa5ca0
+==============================  smallbins   0x20  ==============================
+chunk(0x55555555b250): prev_size=0x0      size=0x21     fd=0x7ffff7fa5cb0  bk=0x7ffff7fa5cb0
+==============================  smallbins   0x160 ==============================
+chunk(0x55555555b0d0): prev_size=0x0      size=0x161    fd=0x7ffff7fa5df0  bk=0x7ffff7fa5df0
+==============================  largebins   0x4f  ==============================
+chunk(0x555555559c50): prev_size=0x0      size=0x821    fd=0x7ffff7fa6190  bk=0x55555555a580
+chunk(0x55555555a580): prev_size=0x5555.. size=0x831    fd=0x555555559c50  bk=0x7ffff7fa6190
+
+relative mode
+
+=========================     relative heapchunks      =========================
+chunk(heap+0x0     ): prev_size=0x0      size=0x251    fd=0x7           bk=0x0
+chunk(heap+0x250   ): prev_size=0x0      size=0x21     fd=0x0           bk=0x0
+chunk(heap+0x270   ): prev_size=0x0      size=0x21     fd=heap+0x260    bk=0x0
+chunk(heap+0x290   ): prev_size=0x0      size=0x21     fd=heap+0x280    bk=0x0
+chunk(heap+0x2b0   ): prev_size=0x0      size=0x21     fd=heap+0x2a0    bk=0x0
+chunk(heap+0x2d0   ): prev_size=0x0      size=0x21     fd=heap+0x2c0    bk=0x0
+chunk(heap+0x2f0   ): prev_size=0x0      size=0x21     fd=heap+0x2e0    bk=0x0
+chunk(heap+0x310   ): prev_size=0x0      size=0x21     fd=heap+0x300    bk=0x0
+chunk(heap+0x330   ): prev_size=0x0      size=0x411    fd=libc+0x1b8190 bk=heap+0xc50
+chunk(heap+0x740   ): prev_size=0x5555.. size=0x401    fd=libc+0x1b7ca0 bk=libc+0x1b7ca0
+chunk(heap+0xb40   ): prev_size=0x400    size=0x110    fd=libc+0x1b82f0 bk=libc+0x1b82f0
+chunk(heap+0xc50   ): prev_size=0x0      size=0x821    fd=libc+0x1b8190 bk=heap+0x1580
+chunk(heap+0x1470  ): prev_size=0x820    size=0x110    fd=libc+0x1b82a0 bk=libc+0x1b82a0
+chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+0x1b8190
+chunk(heap+0x1db0  ): prev_size=0x830    size=0x110    fd=libc+0x1b80b0 bk=libc+0x1b80b0
+chunk(heap+0x1ec0  ): prev_size=0x5555.. size=0x211    fd=libc+0x1b8000 bk=libc+0x1b8000
+chunk(heap+0x20d0  ): prev_size=0x0      size=0x161    fd=libc+0x1b7df0 bk=libc+0x1b7df0
+chunk(heap+0x2230  ): prev_size=0x160    size=0x20     fd=0x0           bk=0x0
+chunk(heap+0x2250  ): prev_size=0x0      size=0x21     fd=libc+0x1b7cb0 bk=libc+0x1b7cb0
+chunk(heap+0x2270  ): prev_size=0x20     size=0x20     fd=0x0           bk=0x0
+chunk(heap+0x2290  ): prev_size=0x0      size=0x111    fd=0x0           bk=0x0
+chunk(heap+0x23a0  ): prev_size=0x0      size=0x1ec61  fd=0x0           bk=0x0
+=========================    relative unsortedbins     =========================
+chunk(heap+0x740   ): prev_size=0x5555.. size=0x401    fd=libc+0x1b7ca0 bk=libc+0x1b7ca0
+=========================  relative smallbins    0x20  =========================
+chunk(heap+0x2250  ): prev_size=0x0      size=0x21     fd=libc+0x1b7cb0 bk=libc+0x1b7cb0
+=========================  relative smallbins    0x160 =========================
+chunk(heap+0x20d0  ): prev_size=0x0      size=0x161    fd=libc+0x1b7df0 bk=libc+0x1b7df0
+=========================  relative largebins    0x4f  =========================
+chunk(heap+0xc50   ): prev_size=0x0      size=0x821    fd=libc+0x1b8190 bk=heap+0x1580
+chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+0x1b8190
+
 
 ```
 
@@ -43,7 +90,16 @@ Oh, I forgot to mention that I'm developing it in `libc-2.27`. Other libc suppor
 
 # Devlog
 
-2018/10/24 version 0.04
+2018/10/26 version 0.0.5
+
+next version will add multi libc support. heapdiff and heap check will be added later.
+
+- `HeapShower`
+- relative heap & libc offset showing
+- fix search loop bug
+- `bins` now search from `bk` instead of `fd`, as the manner of glibc
+
+2018/10/24 version 0.0.4
 
 - `HeapRecoder` , I will make a heapdiff
 - `smallbins` and `largebins`

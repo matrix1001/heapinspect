@@ -194,7 +194,8 @@ class HeapInspector(object):
         self.proc = Proc(pid)
         self.libc_path = self.proc.libc
         self.libc_info = get_libc_info(self.libc_path)
-
+        self.libc_base = self.proc.bases['libc']
+        self.heap_base = self.proc.bases['heap']
     @property
     def heapmem(self):
         start, end = self.proc.ranges['heap'][0]
@@ -202,15 +203,14 @@ class HeapInspector(object):
 
     @property
     def arenamem(self):
-        libc_base = self.proc.bases['libc']
         arena_size = 0x898
-        arena_addr = libc_base + self.libc_info['main_arena_offset']
+        arena_addr = self.libc_base + self.libc_info['main_arena_offset']
         return self.proc.read(arena_addr, arena_size)
 
     @property
     def main_arena(self):
-        libc_base = self.proc.bases['libc']
-        arena_addr = libc_base + self.libc_info['main_arena_offset']
+        if self.heap_base == 0: self.heap_base = self.proc.bases['heap'] #just a refresh in case that heap_base = 0
+        arena_addr = self.libc_base + self.libc_info['main_arena_offset']
         return MallocState._new(self.arenamem, arena_addr)
 
     @property
@@ -226,41 +226,44 @@ class HeapInspector(object):
     @property
     def heap_chunks(self):
         heap_mem = self.heapmem
-        heap_base = self.proc.bases['heap']
         cur_pos = 0
         result = []
         while cur_pos < len(heap_mem):
             cur_block_size = u64(heap_mem[cur_pos+0x8:cur_pos+0x10]) & ~0b111
             memblock = heap_mem[cur_pos:cur_pos+cur_block_size]
-            result.append(MallocChunk._new(memblock, cur_pos + heap_base))
+            result.append(MallocChunk._new(memblock, cur_pos + self.heap_base))
             cur_pos = (cur_pos+cur_block_size) & ~0b1111
             
 
         return result
 
     @property
-    def tcache_chunks(self):
+    def tcache_chunks(self): #fd search, stack like
         result = {}
         for index, entry_ptr in enumerate(self.tcache.entries):
             lst = []
+            tranversed = []
             while entry_ptr:
                 
                 mem = self.proc.read(entry_ptr-0x10, 0x20)
                 chunk = MallocChunk._new(mem, entry_ptr-0x10)
                 lst.append(chunk)
                 entry_ptr = chunk.fd
+                if entry_ptr in tranversed: break
+                else: tranversed.append(entry_ptr)
 
             if lst != []:
-                result[index*0x10+0x20] = lst
+                result[index] = lst
 
         return result
 
     @property
-    def fastbins(self):
+    def fastbins(self): #fd search, stack like
         result = {}
         for index, fastbin_head in enumerate(self.main_arena.fastbinsY):
             fastbin_ptr = fastbin_head
             lst = []
+            tranversed = []
             while fastbin_ptr:
                 
                 mem = self.proc.read(fastbin_ptr, 0x20)
@@ -269,8 +272,11 @@ class HeapInspector(object):
                 fd = chunk.fd
                 fastbin_ptr = fd
 
+                if fastbin_ptr in tranversed: break
+                else: tranversed.append(fastbin_ptr)
+
             if lst != []:
-                result[index*0x10+0x20] = lst
+                result[index] = lst
 
         return result
 
@@ -282,19 +288,23 @@ class HeapInspector(object):
         else:
             return {}
 
-    def bins(self, start=0, end=127):
+    def bins(self, start=0, end=127, chunk_size=0x20): #bk search, queue like
         result = {}
         for index in range(start, end): #len(self.main_arena.bins)/2
             
             lst = []
+            tranversed = []
             head_chunk_addr = self.main_arena._addrof('bins[{}]'.format(index*2)) - 0x10
             chunk_ptr = head_chunk_addr
-            chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
-            while chunk.fd != head_chunk_addr:
-                chunk_ptr = chunk.fd
-                chunk = MallocChunk._new(self.proc.read(chunk_ptr, 0x20), chunk_ptr)
+            chunk = MallocChunk._new(self.proc.read(chunk_ptr, chunk_size), chunk_ptr)
+            while chunk.bk != head_chunk_addr:
+                chunk_ptr = chunk.bk
+                chunk = MallocChunk._new(self.proc.read(chunk_ptr, chunk_size), chunk_ptr)
                 lst.append(chunk)
             
+                if chunk.bk in tranversed: break
+                else: tranversed.append(chunk.bk)
+                
             if lst != []:
                 result[index] = lst
 
@@ -306,7 +316,7 @@ class HeapInspector(object):
 
     @property
     def largebins(self):
-        return self.bins(63, 127)
+        return self.bins(63, 127, 0x30)
 
 
     @property
@@ -314,36 +324,125 @@ class HeapInspector(object):
         return HeapRecorder(self)
 
 class HeapRecorder(object):
-    def __init__(self, hi, heap_base=0, libc_base=0):
-        self._main_arena = hi.main_arena
-        self._heap_chunks = hi.heap_chunks
-        self._fastbins = hi.fastbins
-        self._unsortedbins = hi.unsortedbins
-        self._smallbins = hi.smallbins
-        self._largebins = hi.largebins
-        self._tcache = hi.tcache_chunks
+    def __init__(self, hi):
+        self.main_arena = hi.main_arena
+        self.tcache = hi.tcache
 
-        self._heap_base = heap_base
-        self._libc_base = libc_base
+        self.heap_chunks = hi.heap_chunks
+        self.fastbins = hi.fastbins
+        self.unsortedbins = hi.unsortedbins
+        self.smallbins = hi.smallbins
+        self.largebins = hi.largebins
+        self.tcache_chunks = hi.tcache_chunks
 
+        self.bases = hi.proc.bases
+        self.ranges = hi.proc.ranges
 
+class HeapShower(object):
+    def __init__(self, hi, relative=False, w_limit_size=8):
+        self.hi = hi
+        self.relative = relative
+        self.w_limit_size = w_limit_size
+
+    def heap_chunks(self):
+        chunks = hi.heap_chunks
+        if not self.relative:
+            print('='*30 + '{:^20}'.format('heapchunks') + '='*30)
+            for chunk in chunks:
+                self.show_chunk(chunk)
+        else:
+            print('='*25 + '{:^30}'.format('relative heapchunks') + '='*25)
+            for chunk in chunks:
+                self.show_rela_chunk(chunk)
+
+    def fastbins(self):
+        if not self.relative:
+            for index in self.hi.fastbins:
+                chunks = self.hi.fastbins[index]
+                print('='*30 + '{:^13} {:<#6x}'.format('fastbins', index*0x10+0x10) + '='*30)
+                for chunk in chunks:
+                    self.show_chunk(chunk)
+        else:
+            for index in self.hi.fastbins:
+                print('='*25 + '{:^23} {:<#6x}'.format('relative fastbins', index*0x10+0x10) + '='*25)
+                chunks = hi.fastbins[index]
+                for chunk in chunks:
+                    self.show_rela_chunk(chunk)
+
+    def unsortedbins(self):
+        chunks = hi.unsortedbins
+        if not self.relative:
+            print('='*30 + '{:^20}'.format('unsortedbins') + '='*30)
+            for chunk in chunks:
+                self.show_chunk(chunk)
+        else:
+            print('='*25 + '{:^30}'.format('relative unsortedbins') + '='*25)
+            for chunk in chunks:
+                self.show_rela_chunk(chunk)
+
+    def smallbins(self):
+        if not self.relative:
+            for index in self.hi.smallbins:
+                chunks = self.hi.smallbins[index]
+                print('='*30 + '{:^13} {:<#6x}'.format('smallbins', index*0x10+0x10) + '='*30)
+                for chunk in chunks:
+                    self.show_chunk(chunk)
+        else:
+            for index in self.hi.smallbins:
+                print('='*25 + '{:^23} {:<#6x}'.format('relative smallbins', index*0x10+0x10) + '='*25)
+                chunks = hi.smallbins[index]
+                for chunk in chunks:
+                    self.show_rela_chunk(chunk)
+    def largebins(self):
+        if not self.relative:
+            for index in self.hi.largebins:
+                chunks = self.hi.largebins[index]
+                print('='*30 + '{:^13} {:<#6x}'.format('largebins', index) + '='*30)
+                for chunk in chunks:
+                    self.show_chunk(chunk)
+        else:
+            for index in self.hi.largebins:
+                print('='*25 + '{:^23} {:<#6x}'.format('relative largebins', index) + '='*25)
+                chunks = hi.largebins[index]
+                for chunk in chunks:
+                    self.show_rela_chunk(chunk)
+
+    def show_chunk(self, chunk):
+        print("chunk({:#x}): prev_size={:<8} size={:<#8x} fd={:<#15x} bk={:<#15x}".format(chunk._addr, self.w_limit(chunk.prev_size), chunk.size, chunk.fd, chunk.bk))
+
+    def show_rela_chunk(self, chunk):
+        print("chunk({:<13}): prev_size={:<8} size={:<#8x} fd={:<13} bk={:<13}".format(
+            self.rela_str(chunk._addr), 
+            self.w_limit(chunk.prev_size), 
+            chunk.size, 
+            self.rela_str(chunk.fd), 
+            self.rela_str(chunk.bk)))
+
+    def relative_addr(self, addr):
+        mapname = self.whereis(addr)
+        if mapname in self.hi.bases:
+            return (mapname, addr-self.hi.bases[mapname])
+        else:
+            return ('', addr)
+
+    def rela_str(self, addr):
+        result = self.relative_addr(addr)
+        if result[0]: return result[0]+'+'+hex(result[1])
+        else: return hex(addr)
     
+    def w_limit(self, addr):
+        result = hex(addr)
+        if len(result) > self.w_limit_size:
+            return result[0:6] + '..'
+        return result
 
-
-def show_chunks(chunks, banner=''):
-    if type(chunks) == dict:
-        for header in sorted(chunks.iterkeys()):
-            if type(header) == int:
-                print('='*30 + '{:^20}'.format(banner+' '+hex(header)) + '='*30)
-            else:
-                print('='*30 + '{:^20}'.format(banner+' '+header) + '='*30)
-            for chunk in chunks[header]:
-                print("chunk({:<15}): prev_size={:<8} size={:<8} fd={:<15} bk={:<15}".format(hex(chunk._addr), hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
-
-    elif type(chunks) == list:
-        print('='*30 + '{:^20}'.format(banner) + '='*30)
-        for chunk in chunks:
-            print("chunk({:<15}): prev_size={:<8} size={:<8} fd={:<15} bk={:<15}".format(hex(chunk._addr), hex(chunk.prev_size), hex(chunk.size), hex(chunk.fd), hex(chunk.bk)))
+    def whereis(self, addr):
+        for mapname in self.hi.ranges:
+            lst = self.hi.ranges[mapname]
+            for r in lst:
+                if addr >= r[0] and addr < r[1]:
+                    return mapname
+        return ''
             
 
 
@@ -351,12 +450,21 @@ if __name__ == '__main__':
     pid = int(sys.argv[1])
     hi = HeapInspector(pid)
     r = hi.record
-    show_chunks(r._heap_chunks, 'heapchunks')
-    show_chunks(r._fastbins, 'fastbin')
-    show_chunks(r._unsortedbins, 'unsortedbins')
-    show_chunks(r._smallbins, 'smallbins')
-    show_chunks(r._largebins, 'largebins')
-    show_chunks(r._tcache, 'tcache')
+    hs = HeapShower(r)
+    hs.heap_chunks()
+    hs.fastbins()
+    hs.unsortedbins()
+    hs.smallbins()
+    hs.largebins()
+
+    print('\nrelative mode\n')
+    hs.relative = True
+    hs.heap_chunks()
+    hs.fastbins()
+    hs.unsortedbins()
+    hs.smallbins()
+    hs.largebins()
+    
     
     
 
