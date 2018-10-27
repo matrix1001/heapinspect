@@ -10,9 +10,7 @@ However, I'm starting to work on it. Code is ugly, functions are not complete.
 
 # Useage
 
-__NEWS__
-
-Now support multi glibc (tested on 2.23-2.27) and x86 binary.
+__Now support multi glibc (tested on 2.23-2.27) and x86 binary.__
 
 
 This is an early access view!
@@ -94,7 +92,7 @@ chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+
 
 # Devlog
 
-2018/10/27 version 0.06
+2018/10/27 version 0.0.6
 
 this is not a stable version. im trying to fix bugs due to different glibc. i need help to test this.
 
