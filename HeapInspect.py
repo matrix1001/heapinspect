@@ -1,5 +1,6 @@
 from proc_util import *
 from libc_util import *
+from c_struct import malloc_state_generator, malloc_chunk_generator, tcache_struct_generator
 import struct
 import re
 import sys
@@ -14,188 +15,39 @@ def p32(i):
     return struct.pack('<I', i)
 
 
-malloc_state_struct = '''
-struct malloc_state
-{
-    int mutex;
-    int flags;
-    int have_fastchunks;
-    int align;
-    ptr fastbinsY[10];
-    ptr top;
-    ptr last_remainder;
-    ptr bins[254];
-    int binmap[4];
-    ptr next;
-    ptr next_free;
-    size_t attached_threads;
-    size_t system_mem;
-    size_t max_system_mem;
-}
-'''
-malloc_chunk_struct = '''
-struct malloc_chunk
-{
-    size_t prev_size;
-    size_t size;
-    ptr fd;
-    ptr bk;
-    ptr fd_nextsize;
-    ptr bk_nextsize;
-}
-'''
-
-tcache_perthread_struct = '''
-struct tcache_perthread_struct
-{
-    char counts[64];
-    ptr entries[64];
-}
-'''
-
-class C_Struct(object):
-    def __init__(self, code, arch='64', endian='little'):
-        if arch == '64':
-            self._typ2size = {
-                'bool':1,
-                'byte':1,
-                'char':1,
-                'int':4,
-                'ptr':8,
-                'size_t':8
-            }
-        elif arch == '32':
-            self._typ2size = {
-                'bool':1,
-                'byte':1,
-                'char':1,
-                'int':4,
-                'ptr':4,
-                'size_t':4
-            }
-        else:
-            raise NotImplementedError("Not supported arch for C_Struct")
-        self._arch = arch
-        self._endian = endian
-        self._code = code
-        self._struct_name = re.search('^\s*struct\s+(\w+)\s*{', code).groups()[0]
-        self._vars = []
-        for v in re.findall('\s*(\w*)\ (\w*)\[?(\d+)?\]?;', code):
-            typ, name, num = v
-            if num == '': num = int(1)
-            else: num = int(num)
-            self._vars.append((typ, name, num))
-    
-        self._dict = {}
-        for v in self._vars:
-            typ, name, num = v
-            self._dict[name] = {"typ":typ, "memdump":None, "num":num}
-
-        self._addr = 0
-        self._mem = None
-
-    @property
-    def _size(self):
-        size = 0
-        for v in self._vars:
-            typ, name, num = v
-            
-            size += self._typ2size[typ] * num
-        return size
-
-    def _offset(self, var):
-        offset = 0
-        var_name, var_index = re.findall('^(\w*)\[?(\d+)?\]?$', var)[0]
-        if var_index == '': var_index = 0
-        else: var_index = int(var_index)
-        for v in self._vars:
-            typ, name, num = v
-            if name == var_name:
-                offset += var_index * self._typ2size[typ]
-                break
-            
-            offset += self._typ2size[typ] * num
-        return offset
-
-    def _addrof(self, var):
-        return self._addr + self._offset(var)
-
-    def _sizeof(self, var):
-        var_name, var_index = re.findall('^(\w*)\[?(\d+)?\]?$', var)[0]
-        typ = self._dict[var_name]['typ']
-        num = self._dict[var_name]['num']
-
-        if var_index == '':  # get total size
-            return self._typ2size[typ] * num
-        else:
-            return self._typ2size[typ] # get one size
-    
-    def _init(self, memdump, addr = 0):
-        #assert len(memdump) >= self.size
-        if len(memdump) < self._size:
-            memdump.ljust(self._size, '\0')
-        for v in self._vars:
-            typ, name, num = v
-            offset = self._offset(name)
-            size = self._sizeof(name)
-            self._dict[name]['memdump'] = memdump[offset:offset+size]
-
-        self._mem = memdump
-        self._addr = addr
-
-
-    def _copy(self):
-        new_obj = C_Struct(self._code, self._arch, self._endian)
-        new_obj._init(self._mem, self._addr)
-        return new_obj
-
-    def _new(self, memdump, addr = 0):
-        new_obj = C_Struct(self._code, self._arch, self._endian)
-        new_obj._init(memdump, addr)
-
-        return new_obj
-    def __getattr__(self, var_name):
-        
-        if var_name in self._dict:
-            typ = self._dict[var_name]['typ']
-            num = self._dict[var_name]['num']
-            memdump = self._dict[var_name]['memdump']
-
-            a_size = self._typ2size[typ]
-
-            unpack = lambda x:x
-            if typ == 'int':
-                unpack = lambda x:u32(x)
-            elif (typ == 'size_t' or typ == 'ptr') and self._arch == '32':
-                unpack = lambda x:u32(x)
-            elif (typ == 'size_t' or typ == 'ptr') and self._arch == '64':
-                unpack = lambda x:u64(x)
-            
-
-            if num > 1:
-                result = []
-                for i in range(num):
-                    mem = memdump[i*a_size:i*a_size+a_size]
-                    result.append(unpack(mem))
-                return result
-            else:
-                return unpack(memdump)
-        else:
-            return None
-            
-
-MallocState = C_Struct(malloc_state_struct)
-MallocChunk = C_Struct(malloc_chunk_struct)
-TcacheStruct = C_Struct(tcache_perthread_struct)
 
 class HeapInspector(object):
     def __init__(self, pid):
         self.pid = pid
         self.proc = Proc(pid)
+        self.arch = self.proc.arch
         self.libc_path = self.proc.libc
-        self.libc_info = get_libc_info(self.libc_path)
+
+        if self.arch == '32':
+            self.size_t = 4
+            self.pack = p32
+            self.unpack = u32
+        elif self.arch == '64':
+            self.size_t = 8
+            self.pack = p64
+            self.unpack = u64
+        else: raise NotImplementedError('invalid arch')
+
+        libc_info = get_libc_info(self.libc_path, self.arch)
+        self.libc_version = libc_info['version']
+        self.tcache_enable = libc_info['tcache_enable']
+        self.main_arena_offset = libc_info['main_arena_offset']
+
         self.libc_base = self.proc.bases['libc']
         self.heap_base = self.proc.bases['heap']
+
+        self.MallocState = malloc_state_generator(self.libc_version, self.arch)
+        self.MallocChunk = malloc_chunk_generator(self.libc_version, self.arch)
+        self.TcacheStruct = tcache_struct_generator(self.libc_version, self.arch)
+
+        
+
+
     @property
     def heapmem(self):
         start, end = self.proc.ranges['heap'][0]
@@ -203,23 +55,23 @@ class HeapInspector(object):
 
     @property
     def arenamem(self):
-        arena_size = 0x898
-        arena_addr = self.libc_base + self.libc_info['main_arena_offset']
+        arena_size = self.MallocState._size
+        arena_addr = self.libc_base + self.main_arena_offset
         return self.proc.read(arena_addr, arena_size)
 
     @property
     def main_arena(self):
         if self.heap_base == 0: self.heap_base = self.proc.bases['heap'] #just a refresh in case that heap_base = 0
-        arena_addr = self.libc_base + self.libc_info['main_arena_offset']
-        return MallocState._new(self.arenamem, arena_addr)
+        arena_addr = self.libc_base + self.main_arena_offset
+        return self.MallocState._new(self.arenamem, arena_addr)
 
     @property
     def tcache(self):
-        if self.libc_info['tcache_enable']:
-            base_addr = self.proc.bases['heap'] + 0x10
+        if self.tcache_enable:
+            base_addr = self.proc.bases['heap'] + 2*self.size_t
             
-            mem = self.proc.read(base_addr, TcacheStruct._size)
-            return TcacheStruct._new(mem, base_addr)
+            mem = self.proc.read(base_addr, self.TcacheStruct._size)
+            return self.TcacheStruct._new(mem, base_addr)
         else:
             return None
 
@@ -229,24 +81,37 @@ class HeapInspector(object):
         cur_pos = 0
         result = []
         while cur_pos < len(heap_mem):
-            cur_block_size = u64(heap_mem[cur_pos+0x8:cur_pos+0x10]) & ~0b111
+            cur_block_size = self.unpack(heap_mem[cur_pos+self.size_t:cur_pos+2*self.size_t]) & ~0b111
+
+            if cur_block_size == 0:  #this could be a little bit fucky when it is 32bit libc-2.27
+                cur_pos += 2*self.size_t
+                continue
+                
             memblock = heap_mem[cur_pos:cur_pos+cur_block_size]
-            result.append(MallocChunk._new(memblock, cur_pos + self.heap_base))
-            cur_pos = (cur_pos+cur_block_size) & ~0b1111
+            result.append(self.MallocChunk._new(memblock, cur_pos + self.heap_base))
+
+            if self.arch == '64':
+                cur_pos = (cur_pos+cur_block_size) & ~0b1111
+            elif self.arch == '32':
+                cur_pos = (cur_pos+cur_block_size) & ~0b111
+            
+            if cur_block_size < 2*self.size_t: break
             
 
         return result
 
     @property
     def tcache_chunks(self): #fd search, stack like
+        if not self.tcache_enable:
+            return {}
         result = {}
         for index, entry_ptr in enumerate(self.tcache.entries):
             lst = []
             tranversed = []
             while entry_ptr:
                 
-                mem = self.proc.read(entry_ptr-0x10, 0x20)
-                chunk = MallocChunk._new(mem, entry_ptr-0x10)
+                mem = self.proc.read(entry_ptr-2*self.size_t, 4*self.size_t)
+                chunk = self.MallocChunk._new(mem, entry_ptr-2*self.size_t)
                 lst.append(chunk)
                 entry_ptr = chunk.fd
                 if entry_ptr in tranversed: break
@@ -266,8 +131,8 @@ class HeapInspector(object):
             tranversed = []
             while fastbin_ptr:
                 
-                mem = self.proc.read(fastbin_ptr, 0x20)
-                chunk = MallocChunk._new(mem, fastbin_ptr)
+                mem = self.proc.read(fastbin_ptr, 4*self.size_t)
+                chunk = self.MallocChunk._new(mem, fastbin_ptr)
                 lst.append(chunk)
                 fd = chunk.fd
                 fastbin_ptr = fd
@@ -294,12 +159,12 @@ class HeapInspector(object):
             
             lst = []
             tranversed = []
-            head_chunk_addr = self.main_arena._addrof('bins[{}]'.format(index*2)) - 0x10
+            head_chunk_addr = self.main_arena._addrof('bins[{}]'.format(index*2)) - 2*self.size_t
             chunk_ptr = head_chunk_addr
-            chunk = MallocChunk._new(self.proc.read(chunk_ptr, chunk_size), chunk_ptr)
+            chunk = self.MallocChunk._new(self.proc.read(chunk_ptr, chunk_size), chunk_ptr)
             while chunk.bk != head_chunk_addr:
                 chunk_ptr = chunk.bk
-                chunk = MallocChunk._new(self.proc.read(chunk_ptr, chunk_size), chunk_ptr)
+                chunk = self.MallocChunk._new(self.proc.read(chunk_ptr, chunk_size), chunk_ptr)
                 lst.append(chunk)
             
                 if chunk.bk in tranversed: break
@@ -357,12 +222,14 @@ class HeapShower(object):
 
     def fastbins(self):
         if not self.relative:
+            print('='*30 + '{:^20}'.format('fastbins') + '='*30)
             for index in self.hi.fastbins:
                 chunks = self.hi.fastbins[index]
                 print('='*30 + '{:^13} {:<#6x}'.format('fastbins', index*0x10+0x10) + '='*30)
                 for chunk in chunks:
                     self.show_chunk(chunk)
         else:
+            print('='*25 + '{:^30}'.format('relative fastbins') + '='*25)
             for index in self.hi.fastbins:
                 print('='*25 + '{:^23} {:<#6x}'.format('relative fastbins', index*0x10+0x10) + '='*25)
                 chunks = hi.fastbins[index]
@@ -382,12 +249,14 @@ class HeapShower(object):
 
     def smallbins(self):
         if not self.relative:
+            print('='*30 + '{:^20}'.format('smallbins') + '='*30)
             for index in self.hi.smallbins:
                 chunks = self.hi.smallbins[index]
                 print('='*30 + '{:^13} {:<#6x}'.format('smallbins', index*0x10+0x10) + '='*30)
                 for chunk in chunks:
                     self.show_chunk(chunk)
         else:
+            print('='*25 + '{:^30}'.format('relative smallbins') + '='*25)
             for index in self.hi.smallbins:
                 print('='*25 + '{:^23} {:<#6x}'.format('relative smallbins', index*0x10+0x10) + '='*25)
                 chunks = hi.smallbins[index]
@@ -395,17 +264,37 @@ class HeapShower(object):
                     self.show_rela_chunk(chunk)
     def largebins(self):
         if not self.relative:
+            print('='*30 + '{:^20}'.format('largebins') + '='*30)
             for index in self.hi.largebins:
                 chunks = self.hi.largebins[index]
                 print('='*30 + '{:^13} {:<#6x}'.format('largebins', index) + '='*30)
                 for chunk in chunks:
                     self.show_chunk(chunk)
         else:
+            print('='*25 + '{:^30}'.format('relative largebins') + '='*25)
             for index in self.hi.largebins:
                 print('='*25 + '{:^23} {:<#6x}'.format('relative largebins', index) + '='*25)
                 chunks = hi.largebins[index]
                 for chunk in chunks:
                     self.show_rela_chunk(chunk)
+
+
+    def tcache_chunks(self):
+        if not self.relative:
+            print('='*30 + '{:^20}'.format('tcache') + '='*30)
+            for index in self.hi.tcache_chunks:
+                chunks = self.hi.tcache_chunks[index]
+                print('='*30 + '{:^13} {:<#6x}'.format('tcache', index*0x10+0x10) + '='*30)
+                for chunk in chunks:
+                    self.show_chunk(chunk)
+        else:
+            print('='*25 + '{:^30}'.format('relative tcache') + '='*25)
+            for index in self.hi.tcache_chunks:
+                print('='*25 + '{:^23} {:<#6x}'.format('relative tcache', index*0x10+0x10) + '='*25)
+                chunks = hi.tcache_chunks[index]
+                for chunk in chunks:
+                    self.show_rela_chunk(chunk)
+
 
     def show_chunk(self, chunk):
         print("chunk({:#x}): prev_size={:<8} size={:<#8x} fd={:<#15x} bk={:<#15x}".format(chunk._addr, self.w_limit(chunk.prev_size), chunk.size, chunk.fd, chunk.bk))
@@ -449,6 +338,12 @@ class HeapShower(object):
 if __name__ == '__main__':
     pid = int(sys.argv[1])
     hi = HeapInspector(pid)
+    print("libc version:{} arch:{} tcache_enable:{} libc_base:{:#x} heap_base:{:#x}".format(
+        hi.libc_version,
+        hi.arch,
+        hi.tcache_enable,
+        hi.libc_base,
+        hi.heap_base))
     r = hi.record
     hs = HeapShower(r)
     hs.heap_chunks()
@@ -456,6 +351,7 @@ if __name__ == '__main__':
     hs.unsortedbins()
     hs.smallbins()
     hs.largebins()
+    hs.tcache_chunks()
 
     print('\nrelative mode\n')
     hs.relative = True
@@ -464,6 +360,7 @@ if __name__ == '__main__':
     hs.unsortedbins()
     hs.smallbins()
     hs.largebins()
+    hs.tcache_chunks()
     
     
     

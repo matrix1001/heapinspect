@@ -10,7 +10,7 @@ def build_helper(out_dir, size_t=8):
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     arch = ''
     if size_t==4:
-        arch = '-m 32'
+        arch = '-m32'
     helper_path = '{}/helper/libc_info.c'.format(cur_dir)
     out_path = '{}/helper'.format(out_dir)
     flags = '-w {arch}'.format(arch=arch)
@@ -39,7 +39,7 @@ def get_arena_info(libc_path, size_t=8):
     dir_path = tempfile.mkdtemp()
     helper_path = build_helper(dir_path, size_t=size_t)
 
-    shutil.copy(libc_path, dir_path)
+    shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6')) #this is really fuck, have to be libc.so.6
     shutil.copy(ld_path, dir_path)
 
     command = "{ld} --library-path {dir} {helper}".format(ld=ld_path, dir=dir_path, helper=helper_path)
@@ -50,10 +50,13 @@ def get_arena_info(libc_path, size_t=8):
     dc = json.JSONDecoder()
     return dc.decode(result)
 
-def get_libc_info(libc_path):
+def get_libc_info(libc_path, arch='64'):
     new_versions = ['2.27', '2.28']
     info = {'version':get_libc_version(libc_path)}
-    info.update(get_arena_info(libc_path))
+    if arch == '64':
+        info.update(get_arena_info(libc_path, 8))
+    elif arch == '32':
+        info.update(get_arena_info(libc_path, 4))
     if info['version'] in new_versions:
         
         info['main_arena_offset'] = info['main_arena_offset']-8

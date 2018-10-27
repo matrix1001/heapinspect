@@ -10,10 +10,15 @@ However, I'm starting to work on it. Code is ugly, functions are not complete.
 
 # Useage
 
+__NEWS__
+
+Now support multi glibc (tested on 2.23-2.27) and x86 binary.
+
+
 This is an early access view!
 
 ```raw
-heapinspect $ python test.py 12408
+heapinspect $ python HeapInspect.py 12408
 
 ==============================     heapchunks     ==============================
 chunk(0x555555559000): prev_size=0x0      size=0x251    fd=0x7             bk=0x0
@@ -86,9 +91,15 @@ chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+
 
 ```
 
-Oh, I forgot to mention that I'm developing it in `libc-2.27`. Other libc support will be add on after I finished the framework.
 
 # Devlog
+
+2018/10/27 version 0.06
+
+this is not a stable version. im trying to fix bugs due to different glibc. i need help to test this.
+
+- add multi libc support
+- add x86 support 
 
 2018/10/26 version 0.0.5
 

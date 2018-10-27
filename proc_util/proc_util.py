@@ -3,7 +3,7 @@ import os
 import six
 import codecs
 
-LIBC_REGEX = '^[/\w-]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
+LIBC_REGEX = '^[^\0]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
 class Map(object):
     def __init__(self, start, end, perm, mapname):
         self.start = start
@@ -39,6 +39,16 @@ def vmmap(pid):
 class Proc(object):
     def __init__(self, pid):
         self.pid = pid
+        with open(self.path) as f:
+            self.arch_code = ord(f.read(0x13)[-1])
+        x86_mcode = [3,] #i386 only
+        x64_mcode = [62,] #amd64 only
+        if self.arch_code in x86_mcode:
+            self.arch = '32'
+        elif self.arch_code in x64_mcode:
+            self.arch = '64'
+        else:
+            raise NotImplementedError('none supported arch. cod {}'.format(self.arch_code))
     @property
     def path(self):
         return os.path.realpath("/proc/{}/exe".format(self.pid))
