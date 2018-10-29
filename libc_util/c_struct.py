@@ -195,6 +195,23 @@ struct malloc_state
     size_t max_system_mem;
 }
 '''
+malloc_state_struct_26_32 = '''
+struct malloc_state
+{
+    int mutex;
+    int flags;
+    ptr fastbinsY[11];
+    ptr top;
+    ptr last_remainder;
+    ptr bins[254];
+    int binmap[4];
+    ptr next;
+    ptr next_free;
+    size_t attached_threads;
+    size_t system_mem;
+    size_t max_system_mem;
+}
+'''
 
 malloc_chunk_struct = '''
 struct malloc_chunk
@@ -217,7 +234,10 @@ struct tcache_perthread_struct
 '''
 
 def malloc_state_generator(version='2.27', arch='64'):
-    new = ['2.26', '2.27', '2.28']
+    if arch == '32' and version == '2.26':
+        return C_Struct(malloc_state_struct_26_32, arch)
+
+    new = ['2.27', '2.28']
     if version in new:
         if arch == '64':
             return C_Struct(malloc_state_struct_new_64, arch)

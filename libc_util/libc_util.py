@@ -64,15 +64,16 @@ def get_arch(path):
 
 def get_libc_info(libc_path):
     arch = get_arch(libc_path)
-    new_versions = ['2.26', '2.27', '2.28']
+    new_versions = ['2.27', '2.28']
     info = {'version':get_libc_version(libc_path)}
     if arch == '64':
         info.update(get_arena_info(libc_path, 8))
     elif arch == '32':
         info.update(get_arena_info(libc_path, 4))
     if info['version'] in new_versions:
-        
         info['main_arena_offset'] = info['main_arena_offset']-8
+    if info['version'] == '2.26' and arch == '32':
+        info['main_arena_offset'] = info['main_arena_offset']-4
     return info
     
 if __name__ == '__main__':
