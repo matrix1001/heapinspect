@@ -1,6 +1,5 @@
 from proc_util import *
 from libc_util import *
-from c_struct import malloc_state_generator, malloc_chunk_generator, tcache_struct_generator
 import struct
 import re
 import sys
@@ -33,7 +32,7 @@ class HeapInspector(object):
             self.unpack = u64
         else: raise NotImplementedError('invalid arch')
 
-        libc_info = get_libc_info(self.libc_path, self.arch)
+        libc_info = get_libc_info(self.libc_path)
         self.libc_version = libc_info['version']
         self.tcache_enable = libc_info['tcache_enable']
         self.main_arena_offset = libc_info['main_arena_offset']
@@ -190,6 +189,17 @@ class HeapInspector(object):
 
 class HeapRecorder(object):
     def __init__(self, hi):
+        self.pid = hi.pid
+        self.arch = hi.arch
+        self.libc_version = hi.libc_version
+        self.tcache_enable = hi.tcache_enable
+        self.libc_path = hi.libc_path
+        self.path = hi.proc.path
+
+        self.size_t = hi.size_t
+        self.pack = hi.pack
+        self.unpack = hi.unpack
+
         self.main_arena = hi.main_arena
         self.tcache = hi.tcache
 
@@ -200,6 +210,9 @@ class HeapRecorder(object):
         self.largebins = hi.largebins
         self.tcache_chunks = hi.tcache_chunks
 
+        self.libc_base = hi.libc_base
+        self.heap_base = hi.heap_base
+
         self.bases = hi.proc.bases
         self.ranges = hi.proc.ranges
 
@@ -209,103 +222,107 @@ class HeapShower(object):
         self.relative = relative
         self.w_limit_size = w_limit_size
 
+    @property
     def heap_chunks(self):
-        chunks = hi.heap_chunks
-        if not self.relative:
-            print('='*30 + '{:^20}'.format('heapchunks') + '='*30)
-            for chunk in chunks:
-                self.show_chunk(chunk)
-        else:
-            print('='*25 + '{:^30}'.format('relative heapchunks') + '='*25)
-            for chunk in chunks:
-                self.show_rela_chunk(chunk)
-
+        return self.chunks(self.hi.heap_chunks, 'heapchunks')
+    @property
     def fastbins(self):
-        if not self.relative:
-            print('='*30 + '{:^20}'.format('fastbins') + '='*30)
-            for index in self.hi.fastbins:
-                chunks = self.hi.fastbins[index]
-                print('='*30 + '{:^13} {:<#6x}'.format('fastbins', index*0x10+0x10) + '='*30)
-                for chunk in chunks:
-                    self.show_chunk(chunk)
-        else:
-            print('='*25 + '{:^30}'.format('relative fastbins') + '='*25)
-            for index in self.hi.fastbins:
-                print('='*25 + '{:^23} {:<#6x}'.format('relative fastbins', index*0x10+0x10) + '='*25)
-                chunks = hi.fastbins[index]
-                for chunk in chunks:
-                    self.show_rela_chunk(chunk)
-
+        return self.chunks_with_size(self.hi.fastbins, 'fastbins', lambda x:(x+2)*self.hi.size_t*2)
+    @property
     def unsortedbins(self):
-        chunks = hi.unsortedbins
-        if not self.relative:
-            print('='*30 + '{:^20}'.format('unsortedbins') + '='*30)
-            for chunk in chunks:
-                self.show_chunk(chunk)
-        else:
-            print('='*25 + '{:^30}'.format('relative unsortedbins') + '='*25)
-            for chunk in chunks:
-                self.show_rela_chunk(chunk)
-
+        return self.chunks(self.hi.unsortedbins, 'unsortedbins')
+    @property
     def smallbins(self):
-        if not self.relative:
-            print('='*30 + '{:^20}'.format('smallbins') + '='*30)
-            for index in self.hi.smallbins:
-                chunks = self.hi.smallbins[index]
-                print('='*30 + '{:^13} {:<#6x}'.format('smallbins', index*0x10+0x10) + '='*30)
-                for chunk in chunks:
-                    self.show_chunk(chunk)
-        else:
-            print('='*25 + '{:^30}'.format('relative smallbins') + '='*25)
-            for index in self.hi.smallbins:
-                print('='*25 + '{:^23} {:<#6x}'.format('relative smallbins', index*0x10+0x10) + '='*25)
-                chunks = hi.smallbins[index]
-                for chunk in chunks:
-                    self.show_rela_chunk(chunk)
+        return self.chunks_with_size(self.hi.smallbins, 'smallbins', lambda x:(x+1)*self.hi.size_t*2)
+    @property
     def largebins(self):
-        if not self.relative:
-            print('='*30 + '{:^20}'.format('largebins') + '='*30)
-            for index in self.hi.largebins:
-                chunks = self.hi.largebins[index]
-                print('='*30 + '{:^13} {:<#6x}'.format('largebins', index) + '='*30)
-                for chunk in chunks:
-                    self.show_chunk(chunk)
-        else:
-            print('='*25 + '{:^30}'.format('relative largebins') + '='*25)
-            for index in self.hi.largebins:
-                print('='*25 + '{:^23} {:<#6x}'.format('relative largebins', index) + '='*25)
-                chunks = hi.largebins[index]
-                for chunk in chunks:
-                    self.show_rela_chunk(chunk)
-
-
+        def getsize(index):
+            size = 0x400
+            index -= 0x3f
+            for i in range(index):
+                if i < 32:
+                    size += 64
+                elif i < 48:
+                    size += 512
+                elif i < 56:
+                    size += 4096
+                elif i < 60:
+                    size += 32768
+                elif i < 62:
+                    size += 262144
+                elif i < 63:
+                    size += 0
+            return size
+        return self.chunks_with_size(self.hi.largebins, 'largebins', getsize)
+    @property
     def tcache_chunks(self):
+        return self.chunks_with_size(self.hi.tcache_chunks, 'tcache', lambda x:(x+2)*self.hi.size_t*2)
+    def chunks(self, chunks, typ=''):
+        lines = []
         if not self.relative:
-            print('='*30 + '{:^20}'.format('tcache') + '='*30)
-            for index in self.hi.tcache_chunks:
-                chunks = self.hi.tcache_chunks[index]
-                print('='*30 + '{:^13} {:<#6x}'.format('tcache', index*0x10+0x10) + '='*30)
-                for chunk in chunks:
-                    self.show_chunk(chunk)
+            lines.append(self.banner(typ))
+            for chunk in chunks:
+                lines.append(self.chunk(chunk))
         else:
-            print('='*25 + '{:^30}'.format('relative tcache') + '='*25)
-            for index in self.hi.tcache_chunks:
-                print('='*25 + '{:^23} {:<#6x}'.format('relative tcache', index*0x10+0x10) + '='*25)
-                chunks = hi.tcache_chunks[index]
+            lines.append(self.banner('relative ' + typ))
+            for chunk in chunks:
+                lines.append(self.rela_chunk(chunk))
+        return '\n'.join(lines)
+
+    def chunks_with_size(self, indexed_chunks, typ='', getsize=lambda x:x):
+        lines = []
+        if not self.relative:
+            lines.append(self.banner(typ))
+            for index in sorted(indexed_chunks.keys()):
+                chunks = indexed_chunks[index]
+                lines.append(self.banner_size(typ, getsize(index)))
                 for chunk in chunks:
-                    self.show_rela_chunk(chunk)
+                    lines.append(self.chunk(chunk))
+        else:
+            lines.append(self.banner('relative ' + typ))
+            for index in sorted(indexed_chunks.keys()):
+                lines.append(self.banner_size('relative ' + typ, getsize(index)))
+                chunks = indexed_chunks[index]
+                for chunk in chunks:
+                    lines.append(self.rela_chunk(chunk))
+        return '\n'.join(lines)
+    
+    def banner(self, banner):
+        return '='*25 + '{:^30}'.format(banner) + '='*25
 
+    def banner_size(self, banner, size):
+        return '='*25 + '{:^23} {:<#6x}'.format(banner, size) + '='*25
 
-    def show_chunk(self, chunk):
-        print("chunk({:#x}): prev_size={:<8} size={:<#8x} fd={:<#15x} bk={:<#15x}".format(chunk._addr, self.w_limit(chunk.prev_size), chunk.size, chunk.fd, chunk.bk))
+    def chunk(self, chunk):
+        return "chunk({:#x}): prev_size={:<8} size={:<#8x} fd={:<#15x} bk={:<#15x}".format(chunk._addr, self.w_limit(chunk.prev_size), chunk.size, chunk.fd, chunk.bk)
 
-    def show_rela_chunk(self, chunk):
-        print("chunk({:<13}): prev_size={:<8} size={:<#8x} fd={:<13} bk={:<13}".format(
+    def large_chunk(self, chunk):
+        return "chunk({:#x}): prev_size={:<8} size={:<#8x} fd={:<#15x} bk={:<#15x} fd_nextsize={:<#15x} bk_nextsize={:<#15x}".format(
+            chunk._addr, 
+            self.w_limit(chunk.prev_size), 
+            chunk.size, 
+            chunk.fd, 
+            chunk.bk,
+            chunk.fd_nextsize,
+            chunk.bk_nextsize)
+
+    def rela_chunk(self, chunk):
+        return "chunk({:<13}): prev_size={:<8} size={:<#8x} fd={:<13} bk={:<13}".format(
             self.rela_str(chunk._addr), 
             self.w_limit(chunk.prev_size), 
             chunk.size, 
             self.rela_str(chunk.fd), 
-            self.rela_str(chunk.bk)))
+            self.rela_str(chunk.bk))
+
+    def rela_large_chunk(self, chunk):
+        return "chunk({:<13}): prev_size={:<8} size={:<#8x} fd={:<13} bk={:<13} fd_nextsize={:<13} bk_nextsize={:<13}".format(
+            self.rela_str(chunk._addr), 
+            self.w_limit(chunk.prev_size), 
+            chunk.size, 
+            self.rela_str(chunk.fd), 
+            self.rela_str(chunk.bk),
+            self.rela_str(chunk.fd_nextsize),
+            self.rela_str(chunk.bk_nextsize))
 
     def relative_addr(self, addr):
         mapname = self.whereis(addr)
@@ -338,29 +355,30 @@ class HeapShower(object):
 if __name__ == '__main__':
     pid = int(sys.argv[1])
     hi = HeapInspector(pid)
-    print("libc version:{} arch:{} tcache_enable:{} libc_base:{:#x} heap_base:{:#x}".format(
-        hi.libc_version,
-        hi.arch,
-        hi.tcache_enable,
-        hi.libc_base,
-        hi.heap_base))
     r = hi.record
+    print("libc version:{} arch:{} tcache_enable:{} libc_base:{:#x} heap_base:{:#x}".format(
+        r.libc_version,
+        r.arch,
+        r.tcache_enable,
+        r.libc_base,
+        r.heap_base))
+    
     hs = HeapShower(r)
-    hs.heap_chunks()
-    hs.fastbins()
-    hs.unsortedbins()
-    hs.smallbins()
-    hs.largebins()
-    hs.tcache_chunks()
+    print(hs.heap_chunks)
+    print(hs.fastbins)
+    print(hs.unsortedbins)
+    print(hs.smallbins)
+    print(hs.largebins)
+    print(hs.tcache_chunks)
 
     print('\nrelative mode\n')
     hs.relative = True
-    hs.heap_chunks()
-    hs.fastbins()
-    hs.unsortedbins()
-    hs.smallbins()
-    hs.largebins()
-    hs.tcache_chunks()
+    print(hs.heap_chunks)
+    print(hs.fastbins)
+    print(hs.unsortedbins)
+    print(hs.smallbins)
+    print(hs.largebins)
+    print(hs.tcache_chunks)
     
     
     

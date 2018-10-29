@@ -50,7 +50,20 @@ def get_arena_info(libc_path, size_t=8):
     dc = json.JSONDecoder()
     return dc.decode(result)
 
-def get_libc_info(libc_path, arch='64'):
+def get_arch(path):
+    with open(path) as f:
+        arch_code = ord(f.read(0x13)[-1])
+    x86_mcode = [3,] #i386 only
+    x64_mcode = [62,] #amd64 only
+    if arch_code in x86_mcode:
+        return '32'
+    elif arch_code in x64_mcode:
+        return '64'
+    else:
+        raise NotImplementedError('none supported arch. cod {}'.format(arch_code))
+
+def get_libc_info(libc_path):
+    arch = get_arch(libc_path)
     new_versions = ['2.27', '2.28']
     info = {'version':get_libc_version(libc_path)}
     if arch == '64':

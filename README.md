@@ -6,7 +6,17 @@ Core concept is to inspect heap by a given pid.
 **NO PTRACE, NO GDB, NO NEED OF LIBC**. 
 Future use can falls in heap check and pwn exploration.
 
-However, I'm starting to work on it. Code is ugly, functions are not complete.
+However, I'm starting to work on it. Code is ugly and functions are not complete.
+
+__Advantage over gdb plugins (like pwndbg)__
+
+- No gdb needed. 
+- No ptrace needed. Won't interrupt the process.
+- Implemented in pure python. No other module needed.
+- No symbols needed. (pwndbg need libc symbols to resolve `main_arena`)
+- Easy to use API. (Working on it)
+- Heap diff. (Working on it)
+- blablabla......  
 
 # Useage
 
@@ -91,6 +101,11 @@ chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+
 
 
 # Devlog
+
+2018/10/29 version 0.0.7
+
+- auto test
+- code refine
 
 2018/10/27 version 0.0.6
 

@@ -1,1 +1,1 @@
-from proc_util import *
+from proc_util import Proc
