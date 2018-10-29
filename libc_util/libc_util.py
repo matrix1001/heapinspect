@@ -64,7 +64,7 @@ def get_arch(path):
 
 def get_libc_info(libc_path):
     arch = get_arch(libc_path)
-    new_versions = ['2.27', '2.28']
+    new_versions = ['2.26', '2.27', '2.28']
     info = {'version':get_libc_version(libc_path)}
     if arch == '64':
         info.update(get_arena_info(libc_path, 8))

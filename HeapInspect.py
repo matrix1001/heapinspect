@@ -67,7 +67,15 @@ class HeapInspector(object):
     @property
     def tcache(self):
         if self.tcache_enable:
-            base_addr = self.proc.bases['heap'] + 2*self.size_t
+            #fucky align
+            testmem = self.proc.read(self.proc.bases['heap']+self.size_t, self.size_t)
+
+            if self.unpack(testmem) == 0:
+                base_addr = 4*self.size_t + self.proc.bases['heap']
+            else:
+                base_addr = 2*self.size_t + self.proc.bases['heap']
+
+            
             
             mem = self.proc.read(base_addr, self.TcacheStruct._size)
             return self.TcacheStruct._new(mem, base_addr)
@@ -227,36 +235,19 @@ class HeapShower(object):
         return self.chunks(self.hi.heap_chunks, 'heapchunks')
     @property
     def fastbins(self):
-        return self.chunks_with_size(self.hi.fastbins, 'fastbins', lambda x:(x+2)*self.hi.size_t*2)
+        return self.indexed_chunks(self.hi.fastbins, 'fastbins')
     @property
     def unsortedbins(self):
         return self.chunks(self.hi.unsortedbins, 'unsortedbins')
     @property
     def smallbins(self):
-        return self.chunks_with_size(self.hi.smallbins, 'smallbins', lambda x:(x+1)*self.hi.size_t*2)
+        return self.indexed_chunks(self.hi.smallbins, 'smallbins', -1)
     @property
     def largebins(self):
-        def getsize(index):
-            size = 0x400
-            index -= 0x3f
-            for i in range(index):
-                if i < 32:
-                    size += 64
-                elif i < 48:
-                    size += 512
-                elif i < 56:
-                    size += 4096
-                elif i < 60:
-                    size += 32768
-                elif i < 62:
-                    size += 262144
-                elif i < 63:
-                    size += 0
-            return size
-        return self.chunks_with_size(self.hi.largebins, 'largebins', getsize)
+        return self.indexed_chunks(self.hi.largebins, 'largebins', -0x3f)
     @property
     def tcache_chunks(self):
-        return self.chunks_with_size(self.hi.tcache_chunks, 'tcache', lambda x:(x+2)*self.hi.size_t*2)
+        return self.indexed_chunks(self.hi.tcache_chunks, 'tcache')
     def chunks(self, chunks, typ=''):
         lines = []
         if not self.relative:
@@ -269,20 +260,20 @@ class HeapShower(object):
                 lines.append(self.rela_chunk(chunk))
         return '\n'.join(lines)
 
-    def chunks_with_size(self, indexed_chunks, typ='', getsize=lambda x:x):
+    def indexed_chunks(self, chunk_dict, typ='', align=0):
         lines = []
         if not self.relative:
-            lines.append(self.banner(typ))
-            for index in sorted(indexed_chunks.keys()):
-                chunks = indexed_chunks[index]
-                lines.append(self.banner_size(typ, getsize(index)))
+            lines.append(self.banner(typ)) 
+            for index in sorted(chunk_dict.keys()):
+                chunks = chunk_dict[index]
+                lines.append(self.banner_index(typ, index+align))
                 for chunk in chunks:
                     lines.append(self.chunk(chunk))
         else:
             lines.append(self.banner('relative ' + typ))
-            for index in sorted(indexed_chunks.keys()):
-                lines.append(self.banner_size('relative ' + typ, getsize(index)))
-                chunks = indexed_chunks[index]
+            for index in sorted(chunk_dict.keys()):
+                lines.append(self.banner_index('relative ' + typ, index+align))
+                chunks = chunk_dict[index]
                 for chunk in chunks:
                     lines.append(self.rela_chunk(chunk))
         return '\n'.join(lines)
@@ -290,8 +281,8 @@ class HeapShower(object):
     def banner(self, banner):
         return '='*25 + '{:^30}'.format(banner) + '='*25
 
-    def banner_size(self, banner, size):
-        return '='*25 + '{:^23} {:<#6x}'.format(banner, size) + '='*25
+    def banner_index(self, banner, index):
+        return '{:}[{:}]:'.format(banner, index)
 
     def chunk(self, chunk):
         return "chunk({:#x}): prev_size={:<8} size={:<#8x} fd={:<#15x} bk={:<#15x}".format(chunk._addr, self.w_limit(chunk.prev_size), chunk.size, chunk.fd, chunk.bk)

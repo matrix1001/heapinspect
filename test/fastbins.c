@@ -6,7 +6,7 @@ int main()
     char *lst[TCACHE_COUNT+3] = {0};
     //fasbins[0]
     for(int i=0;i<TCACHE_COUNT+3;i++)
-        lst[i] = malloc(2*sizeof(size_t));
+        lst[i] = malloc(0);
     malloc(2*sizeof(size_t));
     for(int i=0;i<TCACHE_COUNT+3;i++)
         free(lst[i]);

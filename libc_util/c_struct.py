@@ -217,7 +217,7 @@ struct tcache_perthread_struct
 '''
 
 def malloc_state_generator(version='2.27', arch='64'):
-    new = ['2.27', '2.28']
+    new = ['2.26', '2.27', '2.28']
     if version in new:
         if arch == '64':
             return C_Struct(malloc_state_struct_new_64, arch)

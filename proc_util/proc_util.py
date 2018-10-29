@@ -227,6 +227,7 @@ class Proc(object):
         for m in vmmap(self.pid):
             if re.match(LIBC_REGEX, m.mapname):
                 return m.mapname
+        raise NameError('cannot find libc path')
 
 if __name__ == '__main__':
     import sys
