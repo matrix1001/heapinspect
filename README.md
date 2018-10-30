@@ -29,41 +29,13 @@ __Now support multi glibc (tested on 2.23-2.27, both x64 and x86)__
 ## Quick shot
 
 A quick use of this tool.
-```raw
-heapinspect $ python HeapInspect.py 7018
 
-libc version:2.19 arch:32 tcache_enable:False libc_base:0xf7d36000 heap_base:0xf8e97000
-=========================          heapchunks          =========================
-chunk(0xf8e97000): prev_size=0x0      size=0x2c1    fd=0xf7edd450      bk=0xf8e97318
-chunk(0xf8e972c0): prev_size=0x2c0    size=0x58     fd=0x0             bk=0x0
-chunk(0xf8e97318): prev_size=0x0      size=0x59     fd=0xf8e97000      bk=0xf7edd450
-chunk(0xf8e97370): prev_size=0x58     size=0x58     fd=0x0             bk=0x0
-chunk(0xf8e973c8): prev_size=0x0      size=0x20c39  fd=0x0             bk=0x0
-=========================           fastbins           =========================
-=========================         unsortedbins         =========================
-chunk(0xf8e97000): prev_size=0x0      size=0x2c1    fd=0xf7edd450      bk=0xf8e97318
-chunk(0xf8e97318): prev_size=0x0      size=0x59     fd=0xf8e97000      bk=0xf7edd450
-=========================          smallbins           =========================
-=========================          largebins           =========================
-=========================            tcache            =========================
+![pp1](img/pp1.png)
 
-relative mode
+![pp2](img/pp2.png)
 
-=========================     relative heapchunks      =========================
-chunk(heap+0x0     ): prev_size=0x0      size=0x2c1    fd=libc+0x1a7450 bk=heap+0x318
-chunk(heap+0x2c0   ): prev_size=0x2c0    size=0x58     fd=0x0           bk=0x0
-chunk(heap+0x318   ): prev_size=0x0      size=0x59     fd=heap+0x0      bk=libc+0x1a7450
-chunk(heap+0x370   ): prev_size=0x58     size=0x58     fd=0x0           bk=0x0
-chunk(heap+0x3c8   ): prev_size=0x0      size=0x20c39  fd=0x0           bk=0x0
-=========================      relative fastbins       =========================
-=========================    relative unsortedbins     =========================
-chunk(heap+0x0     ): prev_size=0x0      size=0x2c1    fd=libc+0x1a7450 bk=heap+0x318
-chunk(heap+0x318   ): prev_size=0x0      size=0x59     fd=heap+0x0      bk=libc+0x1a7450
-=========================      relative smallbins      =========================
-=========================      relative largebins      =========================
-=========================       relative tcache        =========================
+![pp3](img/pp3.png)
 
-```
 
 ## Basic
 
@@ -87,6 +59,9 @@ print(hs.fastbins)
 sleep(10)
 #now assume that the heap state has changed
 hs.hi = hi.record            #use this to refresh. if you used `hs = HeapShower(hi)`, no need of this.
+
+pp = PrettyPrinter(hi.record)
+print(pp.all)                #pretty printer
 ```
 
 ## Test 
@@ -144,6 +119,7 @@ next version will be a release.
 - CRLF to LF
 - code refine
 - readme refine
+- pretty printer
 
 ## 2018/10/29 version 0.0.7
 

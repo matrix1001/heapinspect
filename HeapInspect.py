@@ -1,8 +1,10 @@
 from proc_util import *
 from libc_util import *
+from auxiliary import *
 import struct
 import re
 import sys
+import os
 
 def u64(data):
     return struct.unpack('<Q', data.ljust(8, '\0'))[0]
@@ -350,35 +352,140 @@ class HeapShower(object):
                     return mapname
         return ''
             
+class PrettyPrinter(object):
+    def __init__(self, hi, relative=False):
+        self.hi = hi
+        self.relative = relative
 
+    @property
+    def fastbins(self):
+        lines = []
+        header_fmt = color.green('({size:#x})    fastbins[{index}] ')
+        for index in sorted(self.hi.fastbins.keys()):
+            size = 2*self.hi.size_t * (index+2)
+            chunks = self.hi.fastbins[index]
+            tail = ''
+            for chunk in chunks:
+                
+                tail += "-> " + color.blue("{:#x} ".format(chunk._addr))
+            line = header_fmt.format(size=size, index=index) + tail
+            if tail != '':lines.append(line)
+
+        return '\n'.join(lines)
+
+    @property
+    def unsortedbins(self):
+        head = color.magenta('unsortedbins: ')
+        tail = ''
+        for chunk in self.hi.unsortedbins:
+            tail += '<-> ' + color.blue("{:#x} ".format(chunk._addr))
+        if tail == '': tail = color.blue('None')
+
+        return head+tail
+
+    @property
+    def smallbins(self):
+        lines = []
+        header_fmt = color.green('({size:#x})    smallbins[{index}] ')
+        for index in sorted(self.hi.smallbins.keys()):
+            size = 2*self.hi.size_t * (index+1)
+            chunks = self.hi.smallbins[index]
+            tail = ''
+            for chunk in chunks:
+                tail += "<-> " + color.blue("{:#x} ".format(chunk._addr))
+            line = header_fmt.format(size=size, index=index-1) + tail
+            if tail != '':lines.append(line)
+
+        return '\n'.join(lines)       
+    
+    @property
+    def largebins(self):
+        lines = []
+        header_fmt = color.green('largebins[{index}] ')
+        for index in sorted(self.hi.largebins.keys()):
+            size = 2*self.hi.size_t * (index+1)
+            chunks = self.hi.largebins[index]
+            tail = ''
+            for chunk in chunks:
+                tail += "<-> " + color.blue("{:#x}".format(chunk._addr) + color.green("({:#x}) ".format(chunk.size & ~0b111)))
+            line = header_fmt.format(size=size, index=index-0x3f) + tail
+            if tail != '':lines.append(line)
+
+        return '\n'.join(lines)       
+    
+    @property
+    def tcache_chunks(self):
+        lines = []
+        header_fmt = color.yellow('({size:#x})    entries[{index}] ')
+        for index in sorted(self.hi.tcache_chunks.keys()):
+            size = 4*self.hi.size_t + index*0x10
+            chunks = self.hi.tcache_chunks[index]
+            tail = ''
+            for chunk in chunks:
+                tail += "-> " + color.blue("{:#x} ".format(chunk._addr+2*self.hi.size_t))
+            line = header_fmt.format(size=size, index=index) + tail
+            if tail != '':lines.append(line)
+
+        return '\n'.join(lines)
+
+    @property
+    def all(self):
+        lines = [self.banner('HeapInspect', 'green')]
+        lines.append(self.basic)
+        lines.append(self.fastbins)
+        lines.append(self.smallbins)
+        lines.append(self.largebins)
+        lines.append(self.tcache_chunks)
+        lines.append(color.magenta('top: ') + color.blue('{:#x}'.format(self.hi.main_arena.top)))
+        lines.append(color.magenta('last_remainder: ') + color.blue('{:#x}'.format(self.hi.main_arena.last_remainder)))
+        lines.append(self.unsortedbins)
+        
+        return '\n'.join(lines)
+        
+    @property
+    def basic(self):
+            return '''libc_version:{} 
+arch:{}
+tcache_enable:{} 
+libc_base:{} 
+heap_base:{}'''.format(
+            color.yellow(self.hi.libc_version),
+            color.yellow(self.hi.arch),
+            color.yellow(self.hi.tcache_enable),
+            color.blue(hex(self.hi.libc_base)),
+            color.blue(hex(self.hi.heap_base)))
+
+
+    def banner(self, msg, color1='white'):
+        w, h = terminal_size()
+        return color.__getattr__(color1)('{:=^{width}}'.format('  {}  '.format(msg), width=w))
 
 if __name__ == '__main__':
     pid = int(sys.argv[1])
     hi = HeapInspector(pid)
     r = hi.record
-    print("libc version:{} arch:{} tcache_enable:{} libc_base:{:#x} heap_base:{:#x}".format(
-        r.libc_version,
-        r.arch,
-        r.tcache_enable,
-        r.libc_base,
-        r.heap_base))
-    
-    hs = HeapShower(r)
-    print(hs.heap_chunks)
-    print(hs.fastbins)
-    print(hs.unsortedbins)
-    print(hs.smallbins)
-    print(hs.largebins)
-    print(hs.tcache_chunks)
+    #print()
 
-    print('\nrelative mode\n')
-    hs.relative = True
-    print(hs.heap_chunks)
-    print(hs.fastbins)
-    print(hs.unsortedbins)
-    print(hs.smallbins)
-    print(hs.largebins)
-    print(hs.tcache_chunks)
+    #hs = HeapShower(r)
+    #print(hs.heap_chunks)
+    #print(hs.fastbins)
+    #print(hs.unsortedbins)
+    #print(hs.smallbins)
+    #print(hs.largebins)
+    #print(hs.tcache_chunks)
+
+    #print('\nrelative mode\n')
+    #hs.relative = True
+    #print(hs.heap_chunks)
+    #print(hs.fastbins)
+    #print(hs.unsortedbins)
+    #print(hs.smallbins)
+    #print(hs.largebins)
+    #print(hs.tcache_chunks)
+
+    pp = PrettyPrinter(r)
+    print(pp.all)
+    
     
     
     
