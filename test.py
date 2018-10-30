@@ -14,7 +14,8 @@ def create_process(dir_path, file_path):
 
 def show_all(pid):
     hi = HeapInspector(pid)
-    hs = HeapShower(hi)
+    hs = HeapShower(hi.record)
+    #hs.relative = 1
     #print(hs.heap_chunks)
     print(hs.fastbins)
     print(hs.unsortedbins)
@@ -39,7 +40,7 @@ if __name__ == '__main__':
             p = create_process(dirname, binary32)
             sleep(0.5)
             show_all(p.pid)
-            raw_input()
+            raw_input('press enter')
             p.terminate()
 
 
@@ -50,5 +51,5 @@ if __name__ == '__main__':
             p = create_process(dirname, binary64)
             sleep(0.5)
             show_all(p.pid)
-            raw_input()
+            raw_input('press enter')
             p.terminate()

@@ -30,14 +30,15 @@ def get_libc_version(path):
 def get_arena_info(libc_path, size_t=8):
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     if size_t==8:
-        arch = '64bit'
+        arch = '64'
     else:
-        arch = '32bit'
+        arch = '32'
     libc_version = get_libc_version(libc_path)
-    ld_path = "{dir}/libraries/libc-{version}/{arch}/ld.so.2".format(dir=cur_dir, version=libc_version, arch=arch)
+    ld_path = "{dir}/libraries/libc-{version}/{arch}bit/ld.so.2".format(dir=cur_dir, version=libc_version, arch=arch)
     
     dir_path = tempfile.mkdtemp()
-    helper_path = build_helper(dir_path, size_t=size_t)
+    #helper_path = build_helper(dir_path, size_t=size_t)  #use this to build helper
+    helper_path = "{dir}/helper/libc_info{arch}".format(dir=cur_dir, arch=arch)  #use pre-compiled binary
 
     shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6')) #this is really fuck, have to be libc.so.6
     shutil.copy(ld_path, dir_path)
@@ -60,20 +61,25 @@ def get_arch(path):
     elif arch_code in x64_mcode:
         return '64'
     else:
-        raise NotImplementedError('none supported arch. cod {}'.format(arch_code))
+        raise NotImplementedError('none supported arch. code {}'.format(arch_code))
 
 def get_libc_info(libc_path):
     arch = get_arch(libc_path)
-    new_versions = ['2.27', '2.28']
+    if arch == '64':size_t = 8
+    elif arch == '32':size_t = 4
+    else: raise NotImplementedError
+
     info = {'version':get_libc_version(libc_path)}
-    if arch == '64':
-        info.update(get_arena_info(libc_path, 8))
-    elif arch == '32':
-        info.update(get_arena_info(libc_path, 4))
-    if info['version'] in new_versions:
-        info['main_arena_offset'] = info['main_arena_offset']-8
-    if info['version'] == '2.26' and arch == '32':
-        info['main_arena_offset'] = info['main_arena_offset']-4
+    info.update(get_arena_info(libc_path, size_t))
+
+    # malloc_state adjust
+    if info['version'] in ['2.27', '2.28']:
+        info['main_arena_offset'] -= size_t
+
+    # 32 bit malloc_state.fastbinsY adjust
+    if info['version'] in ['2.26', '2.27', '2.28'] and arch == '32':
+        info['main_arena_offset'] -= size_t
+    
     return info
     
 if __name__ == '__main__':

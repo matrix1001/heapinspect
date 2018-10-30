@@ -20,6 +20,7 @@ class HeapInspector(object):
         self.pid = pid
         self.proc = Proc(pid)
         self.arch = self.proc.arch
+        self.path = self.proc.path
         self.libc_path = self.proc.libc
 
         if self.arch == '32':
@@ -45,7 +46,12 @@ class HeapInspector(object):
         self.TcacheStruct = tcache_struct_generator(self.libc_version, self.arch)
 
         
-
+    @property
+    def ranges(self):
+        return self.proc.ranges
+    @property
+    def bases(self):
+        return self.proc.bases
 
     @property
     def heapmem(self):
@@ -67,16 +73,13 @@ class HeapInspector(object):
     @property
     def tcache(self):
         if self.tcache_enable:
-            #fucky align
             testmem = self.proc.read(self.proc.bases['heap']+self.size_t, self.size_t)
 
-            if self.unpack(testmem) == 0:
+            if self.unpack(testmem) == 0: #this happens in some 32 bit libc heap
                 base_addr = 4*self.size_t + self.proc.bases['heap']
             else:
                 base_addr = 2*self.size_t + self.proc.bases['heap']
 
-            
-            
             mem = self.proc.read(base_addr, self.TcacheStruct._size)
             return self.TcacheStruct._new(mem, base_addr)
         else:
@@ -90,7 +93,7 @@ class HeapInspector(object):
         while cur_pos < len(heap_mem):
             cur_block_size = self.unpack(heap_mem[cur_pos+self.size_t:cur_pos+2*self.size_t]) & ~0b111
 
-            if cur_block_size == 0:  #this could be a little bit fucky when it is 32bit libc-2.27
+            if cur_block_size == 0:  #this happens in some 32 bit libc heap
                 cur_pos += 2*self.size_t
                 continue
                 
@@ -202,7 +205,7 @@ class HeapRecorder(object):
         self.libc_version = hi.libc_version
         self.tcache_enable = hi.tcache_enable
         self.libc_path = hi.libc_path
-        self.path = hi.proc.path
+        self.path = hi.path
 
         self.size_t = hi.size_t
         self.pack = hi.pack
@@ -221,8 +224,8 @@ class HeapRecorder(object):
         self.libc_base = hi.libc_base
         self.heap_base = hi.heap_base
 
-        self.bases = hi.proc.bases
-        self.ranges = hi.proc.ranges
+        self.bases = hi.bases
+        self.ranges = hi.ranges
 
 class HeapShower(object):
     def __init__(self, hi, relative=False, w_limit_size=8):
@@ -268,14 +271,20 @@ class HeapShower(object):
                 chunks = chunk_dict[index]
                 lines.append(self.banner_index(typ, index+align))
                 for chunk in chunks:
-                    lines.append(self.chunk(chunk))
+                    if typ == 'largebins':
+                        lines.append(self.large_chunk(chunk))
+                    else:
+                        lines.append(self.chunk(chunk))
         else:
             lines.append(self.banner('relative ' + typ))
             for index in sorted(chunk_dict.keys()):
                 lines.append(self.banner_index('relative ' + typ, index+align))
                 chunks = chunk_dict[index]
                 for chunk in chunks:
-                    lines.append(self.rela_chunk(chunk))
+                    if typ == 'largebins':
+                        lines.append(self.rela_large_chunk(chunk))
+                    else:
+                        lines.append(self.rela_chunk(chunk))
         return '\n'.join(lines)
     
     def banner(self, banner):
@@ -337,7 +346,7 @@ class HeapShower(object):
         for mapname in self.hi.ranges:
             lst = self.hi.ranges[mapname]
             for r in lst:
-                if addr >= r[0] and addr < r[1]:
+                if r[0] <= addr < r[1]:
                     return mapname
         return ''
             

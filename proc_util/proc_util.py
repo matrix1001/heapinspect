@@ -13,7 +13,7 @@ def get_arch(path):
     elif arch_code in x64_mcode:
         return '64'
     else:
-        raise NotImplementedError('none supported arch. cod {}'.format(arch_code))
+        raise NotImplementedError('none supported arch. code {}'.format(arch_code))
 
 LIBC_REGEX = '^[^\0]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
 class Map(object):
@@ -227,7 +227,7 @@ class Proc(object):
         for m in vmmap(self.pid):
             if re.match(LIBC_REGEX, m.mapname):
                 return m.mapname
-        raise NameError('cannot find libc path')
+        raise Exception('cannot find libc path')
 
 if __name__ == '__main__':
     import sys

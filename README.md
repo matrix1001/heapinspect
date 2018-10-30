@@ -1,12 +1,15 @@
 # HeapInspect
 
 Dynamically Inspect Heap In Python.
-
 Core concept is to inspect heap by a given pid. 
+
 **NO PTRACE, NO GDB, NO NEED OF LIBC**. 
-Future use can falls in heap check and pwn exploration.
+
+Future use can fall in heap check and pwn exploration.
 
 However, I'm starting to work on it. Code is ugly and functions are not complete.
+
+Best performace on `ipython`.
 
 __Advantage over gdb plugins (like pwndbg)__
 
@@ -14,107 +17,147 @@ __Advantage over gdb plugins (like pwndbg)__
 - No ptrace needed. Won't interrupt the process.
 - Implemented in pure python. No other module needed.
 - No symbols needed. (pwndbg need libc symbols to resolve `main_arena`)
-- Easy to use API. (Working on it)
+- Easy to use API.
 - Heap diff. (Working on it)
 - blablabla......  
 
-# Useage
 
-__Now support multi glibc (tested on 2.23-2.27) and x86 binary.__
+# Usage
 
+__Now support multi glibc (tested on 2.23-2.27, both x64 and x86)__
 
-This is an early access view!
+## Quick shot
 
+A quick use of this tool.
 ```raw
-heapinspect $ python HeapInspect.py 12408
+heapinspect $ python HeapInspect.py 7018
 
-==============================     heapchunks     ==============================
-chunk(0x555555559000): prev_size=0x0      size=0x251    fd=0x7             bk=0x0
-chunk(0x555555559250): prev_size=0x0      size=0x21     fd=0x0             bk=0x0
-chunk(0x555555559270): prev_size=0x0      size=0x21     fd=0x555555559260  bk=0x0
-chunk(0x555555559290): prev_size=0x0      size=0x21     fd=0x555555559280  bk=0x0
-chunk(0x5555555592b0): prev_size=0x0      size=0x21     fd=0x5555555592a0  bk=0x0
-chunk(0x5555555592d0): prev_size=0x0      size=0x21     fd=0x5555555592c0  bk=0x0
-chunk(0x5555555592f0): prev_size=0x0      size=0x21     fd=0x5555555592e0  bk=0x0
-chunk(0x555555559310): prev_size=0x0      size=0x21     fd=0x555555559300  bk=0x0
-chunk(0x555555559330): prev_size=0x0      size=0x411    fd=0x7ffff7fa6190  bk=0x555555559c50
-chunk(0x555555559740): prev_size=0x5555.. size=0x401    fd=0x7ffff7fa5ca0  bk=0x7ffff7fa5ca0
-chunk(0x555555559b40): prev_size=0x400    size=0x110    fd=0x7ffff7fa62f0  bk=0x7ffff7fa62f0
-chunk(0x555555559c50): prev_size=0x0      size=0x821    fd=0x7ffff7fa6190  bk=0x55555555a580
-chunk(0x55555555a470): prev_size=0x820    size=0x110    fd=0x7ffff7fa62a0  bk=0x7ffff7fa62a0
-chunk(0x55555555a580): prev_size=0x5555.. size=0x831    fd=0x555555559c50  bk=0x7ffff7fa6190
-chunk(0x55555555adb0): prev_size=0x830    size=0x110    fd=0x7ffff7fa60b0  bk=0x7ffff7fa60b0
-chunk(0x55555555aec0): prev_size=0x5555.. size=0x211    fd=0x7ffff7fa6000  bk=0x7ffff7fa6000
-chunk(0x55555555b0d0): prev_size=0x0      size=0x161    fd=0x7ffff7fa5df0  bk=0x7ffff7fa5df0
-chunk(0x55555555b230): prev_size=0x160    size=0x20     fd=0x0             bk=0x0
-chunk(0x55555555b250): prev_size=0x0      size=0x21     fd=0x7ffff7fa5cb0  bk=0x7ffff7fa5cb0
-chunk(0x55555555b270): prev_size=0x20     size=0x20     fd=0x0             bk=0x0
-chunk(0x55555555b290): prev_size=0x0      size=0x111    fd=0x0             bk=0x0
-chunk(0x55555555b3a0): prev_size=0x0      size=0x1ec61  fd=0x0             bk=0x0
-==============================    unsortedbins    ==============================
-chunk(0x555555559740): prev_size=0x5555.. size=0x401    fd=0x7ffff7fa5ca0  bk=0x7ffff7fa5ca0
-==============================  smallbins   0x20  ==============================
-chunk(0x55555555b250): prev_size=0x0      size=0x21     fd=0x7ffff7fa5cb0  bk=0x7ffff7fa5cb0
-==============================  smallbins   0x160 ==============================
-chunk(0x55555555b0d0): prev_size=0x0      size=0x161    fd=0x7ffff7fa5df0  bk=0x7ffff7fa5df0
-==============================  largebins   0x4f  ==============================
-chunk(0x555555559c50): prev_size=0x0      size=0x821    fd=0x7ffff7fa6190  bk=0x55555555a580
-chunk(0x55555555a580): prev_size=0x5555.. size=0x831    fd=0x555555559c50  bk=0x7ffff7fa6190
+libc version:2.19 arch:32 tcache_enable:False libc_base:0xf7d36000 heap_base:0xf8e97000
+=========================          heapchunks          =========================
+chunk(0xf8e97000): prev_size=0x0      size=0x2c1    fd=0xf7edd450      bk=0xf8e97318
+chunk(0xf8e972c0): prev_size=0x2c0    size=0x58     fd=0x0             bk=0x0
+chunk(0xf8e97318): prev_size=0x0      size=0x59     fd=0xf8e97000      bk=0xf7edd450
+chunk(0xf8e97370): prev_size=0x58     size=0x58     fd=0x0             bk=0x0
+chunk(0xf8e973c8): prev_size=0x0      size=0x20c39  fd=0x0             bk=0x0
+=========================           fastbins           =========================
+=========================         unsortedbins         =========================
+chunk(0xf8e97000): prev_size=0x0      size=0x2c1    fd=0xf7edd450      bk=0xf8e97318
+chunk(0xf8e97318): prev_size=0x0      size=0x59     fd=0xf8e97000      bk=0xf7edd450
+=========================          smallbins           =========================
+=========================          largebins           =========================
+=========================            tcache            =========================
 
 relative mode
 
 =========================     relative heapchunks      =========================
-chunk(heap+0x0     ): prev_size=0x0      size=0x251    fd=0x7           bk=0x0
-chunk(heap+0x250   ): prev_size=0x0      size=0x21     fd=0x0           bk=0x0
-chunk(heap+0x270   ): prev_size=0x0      size=0x21     fd=heap+0x260    bk=0x0
-chunk(heap+0x290   ): prev_size=0x0      size=0x21     fd=heap+0x280    bk=0x0
-chunk(heap+0x2b0   ): prev_size=0x0      size=0x21     fd=heap+0x2a0    bk=0x0
-chunk(heap+0x2d0   ): prev_size=0x0      size=0x21     fd=heap+0x2c0    bk=0x0
-chunk(heap+0x2f0   ): prev_size=0x0      size=0x21     fd=heap+0x2e0    bk=0x0
-chunk(heap+0x310   ): prev_size=0x0      size=0x21     fd=heap+0x300    bk=0x0
-chunk(heap+0x330   ): prev_size=0x0      size=0x411    fd=libc+0x1b8190 bk=heap+0xc50
-chunk(heap+0x740   ): prev_size=0x5555.. size=0x401    fd=libc+0x1b7ca0 bk=libc+0x1b7ca0
-chunk(heap+0xb40   ): prev_size=0x400    size=0x110    fd=libc+0x1b82f0 bk=libc+0x1b82f0
-chunk(heap+0xc50   ): prev_size=0x0      size=0x821    fd=libc+0x1b8190 bk=heap+0x1580
-chunk(heap+0x1470  ): prev_size=0x820    size=0x110    fd=libc+0x1b82a0 bk=libc+0x1b82a0
-chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+0x1b8190
-chunk(heap+0x1db0  ): prev_size=0x830    size=0x110    fd=libc+0x1b80b0 bk=libc+0x1b80b0
-chunk(heap+0x1ec0  ): prev_size=0x5555.. size=0x211    fd=libc+0x1b8000 bk=libc+0x1b8000
-chunk(heap+0x20d0  ): prev_size=0x0      size=0x161    fd=libc+0x1b7df0 bk=libc+0x1b7df0
-chunk(heap+0x2230  ): prev_size=0x160    size=0x20     fd=0x0           bk=0x0
-chunk(heap+0x2250  ): prev_size=0x0      size=0x21     fd=libc+0x1b7cb0 bk=libc+0x1b7cb0
-chunk(heap+0x2270  ): prev_size=0x20     size=0x20     fd=0x0           bk=0x0
-chunk(heap+0x2290  ): prev_size=0x0      size=0x111    fd=0x0           bk=0x0
-chunk(heap+0x23a0  ): prev_size=0x0      size=0x1ec61  fd=0x0           bk=0x0
+chunk(heap+0x0     ): prev_size=0x0      size=0x2c1    fd=libc+0x1a7450 bk=heap+0x318
+chunk(heap+0x2c0   ): prev_size=0x2c0    size=0x58     fd=0x0           bk=0x0
+chunk(heap+0x318   ): prev_size=0x0      size=0x59     fd=heap+0x0      bk=libc+0x1a7450
+chunk(heap+0x370   ): prev_size=0x58     size=0x58     fd=0x0           bk=0x0
+chunk(heap+0x3c8   ): prev_size=0x0      size=0x20c39  fd=0x0           bk=0x0
+=========================      relative fastbins       =========================
 =========================    relative unsortedbins     =========================
-chunk(heap+0x740   ): prev_size=0x5555.. size=0x401    fd=libc+0x1b7ca0 bk=libc+0x1b7ca0
-=========================  relative smallbins    0x20  =========================
-chunk(heap+0x2250  ): prev_size=0x0      size=0x21     fd=libc+0x1b7cb0 bk=libc+0x1b7cb0
-=========================  relative smallbins    0x160 =========================
-chunk(heap+0x20d0  ): prev_size=0x0      size=0x161    fd=libc+0x1b7df0 bk=libc+0x1b7df0
-=========================  relative largebins    0x4f  =========================
-chunk(heap+0xc50   ): prev_size=0x0      size=0x821    fd=libc+0x1b8190 bk=heap+0x1580
-chunk(heap+0x1580  ): prev_size=0x5555.. size=0x831    fd=heap+0xc50    bk=libc+0x1b8190
-
+chunk(heap+0x0     ): prev_size=0x0      size=0x2c1    fd=libc+0x1a7450 bk=heap+0x318
+chunk(heap+0x318   ): prev_size=0x0      size=0x59     fd=heap+0x0      bk=libc+0x1a7450
+=========================      relative smallbins      =========================
+=========================      relative largebins      =========================
+=========================       relative tcache        =========================
 
 ```
+
+## Basic
+
+Pretty easy to use. I will make it a package in the first release.
+
+```python
+from HeapInspect import *
+hi = HeapInspect(1234)       #pid here
+#hs = HeapShower(hi)         #this will be super slow because of dynamic IO
+hs = HeapShower(hi.record)   #use this to speed up 
+
+print(hs.fastbins)
+print(hs.smallbins)
+print(hs.largebins)
+print(hs.unsortedbins)
+print(hs.tcache_chunks)
+
+hs.relative = 1              #relative mode, check Quick shot
+print(hs.fastbins)
+
+sleep(10)
+#now assume that the heap state has changed
+hs.hi = hi.record            #use this to refresh. if you used `hs = HeapShower(hi)`, no need of this.
+```
+
+## Test 
+
+There are some testcases.
+
+```raw
+heapinspect $ python test.py  #this will run all test cases for you to check this tool.
+
+......
+......
+
+test case unsortedbins64 at test/testcases/libc-2.27/64bit
+pid:6704
+=========================           fastbins           =========================
+=========================         unsortedbins         =========================
+chunk(0x7f9aae2e6720): prev_size=0x0      size=0xb1     fd=0x7f9aacdfbca0  bk=0x7f9aae2e6880
+chunk(0x7f9aae2e6880): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6720  bk=0x7f9aacdfbca0
+=========================          smallbins           =========================
+=========================          largebins           =========================
+=========================            tcache            =========================
+tcache[9]:
+chunk(0x7f9aae2e6670): prev_size=0x0      size=0xb1     fd=0x7f9aae2e65d0  bk=0x0
+chunk(0x7f9aae2e65c0): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6520  bk=0x0
+chunk(0x7f9aae2e6510): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6470  bk=0x0
+chunk(0x7f9aae2e6460): prev_size=0x0      size=0xb1     fd=0x7f9aae2e63c0  bk=0x0
+chunk(0x7f9aae2e63b0): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6310  bk=0x0
+chunk(0x7f9aae2e6300): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6260  bk=0x0
+chunk(0x7f9aae2e6250): prev_size=0x0      size=0xb1     fd=0x0             bk=0x0
+```
+
+# Structure
+
+File structure of this project is pretty simple.
+
+## proc_util
+
+This module handles everything about `/proc/pid/`, including memory reading, vmmap analyzing and so on.
+
+## libc_util
+
+This module handles everything about `glibc`, including getting `main_arena` offset, generating c like structure and so on.
+
+## HeapInspect
+
+Core script of this project. `HeapInspector` parses `heap` and `main_arena`. `HeapRecorder` sees to record the state of heap. `HeapShower` manages to make a user interface and does some semantic analysis.
 
 
 # Devlog
 
-2018/10/29 version 0.0.7
+## 2018/10/30 version 0.0.8
+
+next version will be a release.
+
+- CRLF to LF
+- code refine
+- readme refine
+
+## 2018/10/29 version 0.0.7
 
 - auto test
 - code refine
 
-2018/10/27 version 0.0.6
+## 2018/10/27 version 0.0.6
 
 this is not a stable version. im trying to fix bugs due to different glibc. i need help to test this.
 
 - add multi libc support
 - add x86 support 
 
-2018/10/26 version 0.0.5
+## 2018/10/26 version 0.0.5
 
 next version will add multi libc support. heapdiff and heap check will be added later.
 
@@ -123,28 +166,28 @@ next version will add multi libc support. heapdiff and heap check will be added 
 - fix search loop bug
 - `bins` now search from `bk` instead of `fd`, as the manner of glibc
 
-2018/10/24 version 0.0.4
+## 2018/10/24 version 0.0.4
 
 - `HeapRecoder` , I will make a heapdiff
 - `smallbins` and `largebins`
 
-2018/10/23 version 0.0.3
+## 2018/10/23 version 0.0.3
 
 - `fastbin` prototype
 - `unsortedbin` prototype
 - `bins` prototype
 - `tcache` prototype
 
-2018/10/22 version 0.0.2
+## 2018/10/22 version 0.0.2
 
 - add `C_Struct` to handle c structure
 
-2018/10/19 version 0.0.1
+## 2018/10/19 version 0.0.1
 
 - add `class HeapInspector`
 - trying to parse more information of `arena`
 
-2018/10/18 version 0.0.0
+## 2018/10/18 version 0.0.0
 
 - add `class Proc` in `proc_util`
 - experimental test in `test.py`
