@@ -34,12 +34,14 @@ A quick use of this tool.
 
 ![pp2](img/pp2.png)
 
-![pp3](img/pp3.png)
+![raw1](img/raw1.png)
+
+![rela1](img/rela1.png)
 
 
 ## Basic
 
-Pretty easy to use. I will make it a package in the first release.
+Pretty easy to use. I will make it a package later.
 
 ```python
 from HeapInspect import *
@@ -112,6 +114,12 @@ Core script of this project. `HeapInspector` parses `heap` and `main_arena`. `He
 
 # Devlog
 
+## 2018/10/31 version 0.1.0
+
+first release
+
+- better cmdline option
+  
 ## 2018/10/30 version 0.0.8
 
 next version will be a release.

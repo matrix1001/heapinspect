@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 from proc_util import *
 from libc_util import *
 from auxiliary import *
@@ -5,6 +6,7 @@ import struct
 import re
 import sys
 import os
+import argparse
 
 def u64(data):
     return struct.unpack('<Q', data.ljust(8, '\0'))[0]
@@ -290,7 +292,8 @@ class HeapShower(object):
         return '\n'.join(lines)
     
     def banner(self, banner):
-        return '='*25 + '{:^30}'.format(banner) + '='*25
+        w, h = terminal_size()
+        return '{:=^{width}}'.format('  {}  '.format(banner), width=w)
 
     def banner_index(self, banner, index):
         return '{:}[{:}]:'.format(banner, index)
@@ -444,16 +447,16 @@ class PrettyPrinter(object):
         
     @property
     def basic(self):
-            return '''libc_version:{} 
+        return '''libc_version:{} 
 arch:{}
 tcache_enable:{} 
 libc_base:{} 
 heap_base:{}'''.format(
-            color.yellow(self.hi.libc_version),
-            color.yellow(self.hi.arch),
-            color.yellow(self.hi.tcache_enable),
-            color.blue(hex(self.hi.libc_base)),
-            color.blue(hex(self.hi.heap_base)))
+        color.yellow(self.hi.libc_version),
+        color.yellow(self.hi.arch),
+        color.yellow(self.hi.tcache_enable),
+        color.blue(hex(self.hi.libc_base)),
+        color.blue(hex(self.hi.heap_base)))
 
 
     def banner(self, msg, color1='white'):
@@ -461,30 +464,44 @@ heap_base:{}'''.format(
         return color.__getattr__(color1)('{:=^{width}}'.format('  {}  '.format(msg), width=w))
 
 if __name__ == '__main__':
-    pid = int(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        prog='HeapInspect.py',
+        description='''Inspect your heap by a given pid.
+Author:matrix1001
+Github:https://github.com/matrix1001/heapinspect''')
+    parser.add_argument('--raw', action='store_true', help='show more detailed chunk info')
+    parser.add_argument('--rela', action='store_true', help='show relative detailed chunk info')
+    parser.add_argument('pid', type=int, help='pid of the process')
+    parser.add_argument('-x', nargs='*', help='''ignore: hc(heapchunks) fb(fastbins) sb(smallbins) lb(largebins) ub(unsortedbins)
+tc(tcache) !put this argument at last!''')
+    
+    args = parser.parse_args()
+
+    pid = args.pid
+
     hi = HeapInspector(pid)
     r = hi.record
-    #print()
-
-    #hs = HeapShower(r)
-    #print(hs.heap_chunks)
-    #print(hs.fastbins)
-    #print(hs.unsortedbins)
-    #print(hs.smallbins)
-    #print(hs.largebins)
-    #print(hs.tcache_chunks)
-
-    #print('\nrelative mode\n')
-    #hs.relative = True
-    #print(hs.heap_chunks)
-    #print(hs.fastbins)
-    #print(hs.unsortedbins)
-    #print(hs.smallbins)
-    #print(hs.largebins)
-    #print(hs.tcache_chunks)
-
-    pp = PrettyPrinter(r)
-    print(pp.all)
+    ign = args.x or []
+    if args.rela:
+        hs = HeapShower(r)
+        hs.relative = True
+        if 'hc' not in ign: print(hs.heap_chunks)
+        if 'fb' not in ign: print(hs.fastbins)
+        if 'ub' not in ign: print(hs.unsortedbins)
+        if 'sb' not in ign: print(hs.smallbins)
+        if 'lb' not in ign: print(hs.largebins)
+        if 'tc' not in ign: print(hs.tcache_chunks)
+    elif args.raw:
+        hs = HeapShower(r)
+        if 'hc' not in ign: print(hs.heap_chunks)
+        if 'fb' not in ign: print(hs.fastbins)
+        if 'ub' not in ign: print(hs.unsortedbins)
+        if 'sb' not in ign: print(hs.smallbins)
+        if 'lb' not in ign: print(hs.largebins)
+        if 'tc' not in ign: print(hs.tcache_chunks)
+    else:
+        pp = PrettyPrinter(r)
+        print(pp.all)
     
     
     
