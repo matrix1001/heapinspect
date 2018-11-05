@@ -95,24 +95,20 @@ chunk(0x7f9aae2e6300): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6260  bk=0x
 chunk(0x7f9aae2e6250): prev_size=0x0      size=0xb1     fd=0x0             bk=0x0
 ```
 
-# Structure
-
-File structure of this project is pretty simple.
-
-## proc_util
-
-This module handles everything about `/proc/pid/`, including memory reading, vmmap analyzing and so on.
-
-## libc_util
-
-This module handles everything about `glibc`, including getting `main_arena` offset, generating c like structure and so on.
-
 ## HeapInspect
 
 Core script of this project. `HeapInspector` parses `heap` and `main_arena`. `HeapRecorder` sees to record the state of heap. `HeapShower` manages to make a user interface and does some semantic analysis.
 
 
 # Devlog
+
+## 2018/11/5 version 0.1.1
+
+not a functional update.
+
+- PEP8
+- docstrings
+- performance update
 
 ## 2018/10/31 version 0.1.0
 

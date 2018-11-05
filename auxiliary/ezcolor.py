@@ -1,4 +1,4 @@
-#https://github.com/matrix1001/ezcolor
+# https://github.com/matrix1001/ezcolor
 class Color:
     def __init__(self):
         self._colors = {
@@ -16,20 +16,19 @@ class Color:
                 'bold': 1,
                 'light': 2,
                 'on': 3,
-                'underline':4,
+                'underline': 4,
                 'on2': 5,
                 }
         self._fg = 30
         self._bg = 40
-                
         self.fmt = u'\033[{style};{fg};{bg}m{msg}\033[m'
+
     def __getattr__(self, attr):
         '''sample: bold_red_bg_blue'''
         style = self._style['default']
         fg = self._colors['white'] + self._fg
         bg = self._colors['black'] + self._bg
         lst = attr.split('_')
-        
         ind = 0
         while ind < len(lst):
             if lst[ind] in self._style:
@@ -45,10 +44,13 @@ class Color:
             else:
                 raise Exception('no such color')
             ind += 1
+
         def format(msg):
             return self.fmt.format(style=style, fg=fg, bg=bg, msg=msg)
+
         return format
-        
+
+
 color = Color()
 if __name__ == '__main__':
     print(color.on_red('test red'))
