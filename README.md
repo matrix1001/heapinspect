@@ -46,8 +46,7 @@ Pretty easy to use. I will make it a package later.
 ```python
 from HeapInspect import *
 hi = HeapInspect(1234)       #pid here
-#hs = HeapShower(hi)         #this will be super slow because of dynamic IO
-hs = HeapShower(hi.record)   #use this to speed up 
+hs = HeapShower(hi)
 
 print(hs.fastbins)
 print(hs.smallbins)
@@ -60,10 +59,11 @@ print(hs.fastbins)
 
 sleep(10)
 #now assume that the heap state has changed
-hs.hi = hi.record            #use this to refresh. if you used `hs = HeapShower(hi)`, no need of this.
+hs.update()                  #use this to refresh
 
-pp = PrettyPrinter(hi.record)
+pp = PrettyPrinter(hi)
 print(pp.all)                #pretty printer
+pp.update()                  #use this to update
 ```
 
 ## Test 
@@ -94,11 +94,6 @@ chunk(0x7f9aae2e63b0): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6310  bk=0x
 chunk(0x7f9aae2e6300): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6260  bk=0x0
 chunk(0x7f9aae2e6250): prev_size=0x0      size=0xb1     fd=0x0             bk=0x0
 ```
-
-## HeapInspect
-
-Core script of this project. `HeapInspector` parses `heap` and `main_arena`. `HeapRecorder` sees to record the state of heap. `HeapShower` manages to make a user interface and does some semantic analysis.
-
 
 # Devlog
 
