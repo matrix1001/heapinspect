@@ -1,0 +1,1028 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>heapinspect package &#8212; HeapInspect 0.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="heapinspect-package">
+<h1>heapinspect package<a class="headerlink" href="#heapinspect-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="heapinspect.auxiliary.html">heapinspect.auxiliary package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="heapinspect.auxiliary.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heapinspect.auxiliary.html#module-heapinspect.auxiliary.ezcolor">heapinspect.auxiliary.ezcolor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heapinspect.auxiliary.html#module-heapinspect.auxiliary.utils">heapinspect.auxiliary.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="heapinspect.auxiliary.html#module-heapinspect.auxiliary">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-heapinspect.c_struct">
+<span id="heapinspect-c-struct-module"></span><h2>heapinspect.c_struct module<a class="headerlink" href="#module-heapinspect.c_struct" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="heapinspect.c_struct.C_Struct">
+<em class="property">class </em><code class="descclassname">heapinspect.c_struct.</code><code class="descname">C_Struct</code><span class="sig-paren">(</span><em>code</em>, <em>arch='64'</em>, <em>endian='little'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#C_Struct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.C_Struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class handles memory dump of c structure.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>_arch (str): ‘32’ or ‘64’.
+_vars (list): List of vars.
+_dict (dict): Dict of vars.
+_addr (ind): The start address of the memory dump.
+other (str): Defined by <cite>_code</cite>.</dd>
+<dt>Args:</dt>
+<dd>code (str): The core of C_Struct, check example.
+arch (:obj:str, optional): The arch of target. ‘64’ by default.
+Also support ‘32’.
+endian (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>, optional): The endian. ‘little’ by default.
+Not support ‘big’ yet.</dd>
+<dt>Raises:</dt>
+<dd>NotImplementedError: If arch is not ‘64’ or ‘32’.</dd>
+<dt>Examples:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">code</span> <span class="o">=</span> <span class="s1">&#39;struct test{int a; char b[10];}&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test</span> <span class="o">=</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">_vars</span><span class="p">)</span>
+<span class="go">[(&#39;int&#39;, &#39;a&#39;, 1), (&#39;char&#39;, &#39;b&#39;, 10)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">dict</span><span class="p">)</span>
+<span class="go">{&#39;a&#39;: {&#39;memdump&#39;: &#39;&#39;, &#39;num&#39;: 1, &#39;typ&#39;: &#39;int&#39;},</span>
+<span class="go"> &#39;b&#39;: {&#39;memdump&#39;: &#39;&#39;, &#39;num&#39;: 10, &#39;typ&#39;: &#39;char&#39;}}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.malloc_chunk_generator">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_chunk_generator</code><span class="sig-paren">(</span><em>version='2.27'</em>, <em>arch='64'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#malloc_chunk_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.malloc_chunk_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate C_Struct of malloc_chunk.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>version (str): glibc version,  ‘2.19’ - ‘2.28’.
+arch (str): ‘64’ or ‘32’</dd>
+<dt>Returns:</dt>
+<dd>C_Struct: The corresponding C_Struct.</dd>
+</dl>
+</dd></dl>
+
+<dl class="data">
+<dt id="heapinspect.c_struct.malloc_chunk_struct">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_chunk_struct</code><em class="property"> = '\nstruct malloc_chunk\n{\n    size_t prev_size;\n    size_t size;\n    ptr fd;\n    ptr bk;\n    ptr fd_nextsize;\n    ptr bk_nextsize;\n}\n'</em><a class="headerlink" href="#heapinspect.c_struct.malloc_chunk_struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: malloc_chunk</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.malloc_state_generator">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_state_generator</code><span class="sig-paren">(</span><em>version='2.27'</em>, <em>arch='64'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#malloc_state_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.malloc_state_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate C_Struct of malloc_state (arena).</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>version (str): glibc version,  ‘2.19’ - ‘2.28’.
+arch (str): ‘64’ or ‘32’</dd>
+<dt>Returns:</dt>
+<dd>C_Struct: The corresponding C_Struct.</dd>
+</dl>
+</dd></dl>
+
+<dl class="data">
+<dt id="heapinspect.c_struct.malloc_state_struct_26_32">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_state_struct_26_32</code><em class="property"> = '\nstruct malloc_state\n{\n    int mutex;\n    int flags;\n    ptr fastbinsY[11];\n    ptr top;\n    ptr last_remainder;\n    ptr bins[254];\n    int binmap[4];\n    ptr next;\n    ptr next_free;\n    size_t attached_threads;\n    size_t system_mem;\n    size_t max_system_mem;\n}\n'</em><a class="headerlink" href="#heapinspect.c_struct.malloc_state_struct_26_32" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: malloc_state of glibc 2.26 32bit.</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>malloc_state.fastbinsY is different from other glibc.</dd>
+</dl>
+</dd></dl>
+
+<dl class="data">
+<dt id="heapinspect.c_struct.malloc_state_struct_new_32">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_state_struct_new_32</code><em class="property"> = '\nstruct malloc_state\n{\n    int mutex;\n    int flags;\n    int have_fastchunks;\n    ptr fastbinsY[11];\n    ptr top;\n    ptr last_remainder;\n    ptr bins[254];\n    int binmap[4];\n    ptr next;\n    ptr next_free;\n    size_t attached_threads;\n    size_t system_mem;\n    size_t max_system_mem;\n}\n'</em><a class="headerlink" href="#heapinspect.c_struct.malloc_state_struct_new_32" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: malloc_state of glibc 2.27+ 32bit</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="heapinspect.c_struct.malloc_state_struct_new_64">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_state_struct_new_64</code><em class="property"> = '\nstruct malloc_state\n{\n    int mutex;\n    int flags;\n    int have_fastchunks;\n    int align;\n    ptr fastbinsY[10];\n    ptr top;\n    ptr last_remainder;\n    ptr bins[254];\n    int binmap[4];\n    ptr next;\n    ptr next_free;\n    size_t attached_threads;\n    size_t system_mem;\n    size_t max_system_mem;\n}\n'</em><a class="headerlink" href="#heapinspect.c_struct.malloc_state_struct_new_64" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: malloc_state of glibc 2.27+ 64bit</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="heapinspect.c_struct.malloc_state_struct_old">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">malloc_state_struct_old</code><em class="property"> = '\nstruct malloc_state\n{\n    int mutex;\n    int flags;\n    ptr fastbinsY[10];\n    ptr top;\n    ptr last_remainder;\n    ptr bins[254];\n    int binmap[4];\n    ptr next;\n    ptr next_free;\n    size_t attached_threads;\n    size_t system_mem;\n    size_t max_system_mem;\n}\n'</em><a class="headerlink" href="#heapinspect.c_struct.malloc_state_struct_old" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: malloc_state of glibc 2.19 - 2.26 64bit, 2.19 - 2.25 32bit.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.p32">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">p32</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#p32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.p32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 32bit int with little endian to data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>int: Value to pack.</dd>
+<dt>Return:</dt>
+<dd>data (str): Packed data.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.p64">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">p64</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#p64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.p64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 64bit int with little endian to data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>int: Value to pack.</dd>
+<dt>Return:</dt>
+<dd>data (str): Packed data.</dd>
+</dl>
+</dd></dl>
+
+<dl class="data">
+<dt id="heapinspect.c_struct.tcache_perthread_struct">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">tcache_perthread_struct</code><em class="property"> = '\nstruct tcache_perthread_struct\n{\n    char counts[64];\n    ptr entries[64];\n}\n'</em><a class="headerlink" href="#heapinspect.c_struct.tcache_perthread_struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: tcache_perthread</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.tcache_struct_generator">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">tcache_struct_generator</code><span class="sig-paren">(</span><em>version='2.27'</em>, <em>arch='64'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#tcache_struct_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.tcache_struct_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate C_Struct of tcache_perthread (tcache).</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>version (str): glibc version,  ‘2.19’ - ‘2.28’.
+arch (str): ‘64’ or ‘32’</dd>
+<dt>Returns:</dt>
+<dd>C_Struct: The corresponding C_Struct.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.u32">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">u32</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#u32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.u32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 32bit data with little endian.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>data (str): Data to unpack.</dd>
+<dt>Return:</dt>
+<dd>int: Unpacked value.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.c_struct.u64">
+<code class="descclassname">heapinspect.c_struct.</code><code class="descname">u64</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/c_struct.html#u64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.c_struct.u64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 64bit data with little endian.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>data (str): Data to unpack.</dd>
+<dt>Return:</dt>
+<dd>int: Unpacked value.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-heapinspect.core">
+<span id="heapinspect-core-module"></span><h2>heapinspect.core module<a class="headerlink" href="#module-heapinspect.core" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="heapinspect.core.HeapInspector">
+<em class="property">class </em><code class="descclassname">heapinspect.core.</code><code class="descname">HeapInspector</code><span class="sig-paren">(</span><em>pid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapInspector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapInspector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Core Class to parse heap and arena.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>pid (int): pid of the monitored process.
+arch (str): ‘32’ or ‘64’.
+libc_path (str): Path to libc.
+libc_version (str): Libc version like ‘2.23’.
+libc_base (int): Start address of libc.
+heap_base (int): Start address of heap.</dd>
+<dt>Args:</dt>
+<dd>pid (int): pid of the target process.</dd>
+<dt>Raises:</dt>
+<dd>NotImplementedError: for none supported arch.</dd>
+</dl>
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.arenamem">
+<code class="descname">arenamem</code><a class="headerlink" href="#heapinspect.core.HeapInspector.arenamem" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: main_arena memory dump.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.bases">
+<code class="descname">bases</code><a class="headerlink" href="#heapinspect.core.HeapInspector.bases" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: vmmap start addresses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapInspector.bins">
+<code class="descname">bins</code><span class="sig-paren">(</span><em>start=0</em>, <em>end=127</em>, <em>chunk_size=32</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapInspector.bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapInspector.bins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate bins of the arena.</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>malloc_state has 127 bins. bins[0] is unsortedbins,
+bins[1] - bins[62] are smallbins,
+bins[63] - bins[126] are largebins.</dd>
+<dt>Args:</dt>
+<dd>strat (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>, optional): Start positions.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.fastbins">
+<code class="descname">fastbins</code><a class="headerlink" href="#heapinspect.core.HeapInspector.fastbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: dict of fastbins.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.heap_chunks">
+<code class="descname">heap_chunks</code><a class="headerlink" href="#heapinspect.core.HeapInspector.heap_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>list(C_Struct): list of heap chunks.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.heapmem">
+<code class="descname">heapmem</code><a class="headerlink" href="#heapinspect.core.HeapInspector.heapmem" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: heap memory dump.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.largebins">
+<code class="descname">largebins</code><a class="headerlink" href="#heapinspect.core.HeapInspector.largebins" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: dict of largebins.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.main_arena">
+<code class="descname">main_arena</code><a class="headerlink" href="#heapinspect.core.HeapInspector.main_arena" title="Permalink to this definition">¶</a></dt>
+<dd><p>C_Struct: main_arena</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.ranges">
+<code class="descname">ranges</code><a class="headerlink" href="#heapinspect.core.HeapInspector.ranges" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: vmmap ranges.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.record">
+<code class="descname">record</code><a class="headerlink" href="#heapinspect.core.HeapInspector.record" title="Permalink to this definition">¶</a></dt>
+<dd><p>HeapRecorder: A record.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.smallbins">
+<code class="descname">smallbins</code><a class="headerlink" href="#heapinspect.core.HeapInspector.smallbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: dict of smallbins.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.tcache">
+<code class="descname">tcache</code><a class="headerlink" href="#heapinspect.core.HeapInspector.tcache" title="Permalink to this definition">¶</a></dt>
+<dd><p>C_Struct: tcache perthread</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.tcache_chunks">
+<code class="descname">tcache_chunks</code><a class="headerlink" href="#heapinspect.core.HeapInspector.tcache_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: dict of tcache_chunks.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapInspector.unsortedbins">
+<code class="descname">unsortedbins</code><a class="headerlink" href="#heapinspect.core.HeapInspector.unsortedbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>list: list of unsortedbins.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="heapinspect.core.HeapRecorder">
+<em class="property">class </em><code class="descclassname">heapinspect.core.</code><code class="descname">HeapRecorder</code><span class="sig-paren">(</span><em>hi</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapRecorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapRecorder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This Class is implemented for recoding the state of HeapInspector.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>hi (HeapInspector): the HeapInspector instance.</dd>
+</dl>
+<dl class="attribute">
+<dt id="heapinspect.core.HeapRecorder.record">
+<code class="descname">record</code><a class="headerlink" href="#heapinspect.core.HeapRecorder.record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="heapinspect.core.HeapShower">
+<em class="property">class </em><code class="descclassname">heapinspect.core.</code><code class="descname">HeapShower</code><span class="sig-paren">(</span><em>hi</em>, <em>relative=False</em>, <em>w_limit_size=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Print heap and arena information in detailed mode.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>hi (HeapInspector or HeapRecord): HeapInspector or HeapRecord.
+relative (bool): Show relative addresses.
+w_limit_size (int): Data size limit.</dd>
+</dl>
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.banner">
+<code class="descname">banner</code><span class="sig-paren">(</span><em>banner</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.banner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.banner" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.banner_index">
+<code class="descname">banner_index</code><span class="sig-paren">(</span><em>banner</em>, <em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.banner_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.banner_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.chunk">
+<code class="descname">chunk</code><span class="sig-paren">(</span><em>chunk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.chunk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.chunks">
+<code class="descname">chunks</code><span class="sig-paren">(</span><em>chunks</em>, <em>typ=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.chunks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.chunks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapShower.fastbins">
+<code class="descname">fastbins</code><a class="headerlink" href="#heapinspect.core.HeapShower.fastbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: formated fastbins str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapShower.heap_chunks">
+<code class="descname">heap_chunks</code><a class="headerlink" href="#heapinspect.core.HeapShower.heap_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: formated heapchunks str.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.indexed_chunks">
+<code class="descname">indexed_chunks</code><span class="sig-paren">(</span><em>chunk_dict</em>, <em>typ=''</em>, <em>align=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.indexed_chunks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.indexed_chunks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.large_chunk">
+<code class="descname">large_chunk</code><span class="sig-paren">(</span><em>chunk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.large_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.large_chunk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapShower.largebins">
+<code class="descname">largebins</code><a class="headerlink" href="#heapinspect.core.HeapShower.largebins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: formated largebins str.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.rela_chunk">
+<code class="descname">rela_chunk</code><span class="sig-paren">(</span><em>chunk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.rela_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.rela_chunk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.rela_large_chunk">
+<code class="descname">rela_large_chunk</code><span class="sig-paren">(</span><em>chunk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.rela_large_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.rela_large_chunk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.rela_str">
+<code class="descname">rela_str</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.rela_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.rela_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.relative_addr">
+<code class="descname">relative_addr</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.relative_addr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.relative_addr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapShower.smallbins">
+<code class="descname">smallbins</code><a class="headerlink" href="#heapinspect.core.HeapShower.smallbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: formated smallbins str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapShower.tcache_chunks">
+<code class="descname">tcache_chunks</code><a class="headerlink" href="#heapinspect.core.HeapShower.tcache_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: formated tcache chunks str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.HeapShower.unsortedbins">
+<code class="descname">unsortedbins</code><a class="headerlink" href="#heapinspect.core.HeapShower.unsortedbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: formated unsortedbins str.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the HeapRecord.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.w_limit">
+<code class="descname">w_limit</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.w_limit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.w_limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.HeapShower.whereis">
+<code class="descname">whereis</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#HeapShower.whereis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.HeapShower.whereis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="heapinspect.core.PrettyPrinter">
+<em class="property">class </em><code class="descclassname">heapinspect.core.</code><code class="descname">PrettyPrinter</code><span class="sig-paren">(</span><em>hi</em>, <em>relative=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#PrettyPrinter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.PrettyPrinter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Pretty Printer for HeapInspector.</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>With the shortage of not able to show enough infomation.
+Use HeapShower for detailed infomation.</dd>
+<dt>Args:</dt>
+<dd>hi (HeapInspector or HeapRecord): HeapInspector or HeapRecord.
+relative (bool): Show relative addresses.</dd>
+</dl>
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.all">
+<code class="descname">all</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: pretty formated all infomation of heap.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.PrettyPrinter.banner">
+<code class="descname">banner</code><span class="sig-paren">(</span><em>msg</em>, <em>color1='white'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#PrettyPrinter.banner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.PrettyPrinter.banner" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.basic">
+<code class="descname">basic</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.basic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.fastbins">
+<code class="descname">fastbins</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.fastbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: pretty formated fastbins str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.largebins">
+<code class="descname">largebins</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.largebins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: pretty formated largebins str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.smallbins">
+<code class="descname">smallbins</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.smallbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: pretty formated smallbins str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.tcache_chunks">
+<code class="descname">tcache_chunks</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.tcache_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: pretty formated tcache chunks str.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.core.PrettyPrinter.unsortedbins">
+<code class="descname">unsortedbins</code><a class="headerlink" href="#heapinspect.core.PrettyPrinter.unsortedbins" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: pretty formated unsortedbins str.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.core.PrettyPrinter.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#PrettyPrinter.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.PrettyPrinter.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the HeapRecord.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.core.p32">
+<code class="descclassname">heapinspect.core.</code><code class="descname">p32</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#p32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.p32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 32bit int with little endian to data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>int: Value to pack.</dd>
+<dt>Return:</dt>
+<dd>data (str): Packed data.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.core.p64">
+<code class="descclassname">heapinspect.core.</code><code class="descname">p64</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#p64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.p64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 64bit int with little endian to data.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>int: Value to pack.</dd>
+<dt>Return:</dt>
+<dd>data (str): Packed data.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.core.u32">
+<code class="descclassname">heapinspect.core.</code><code class="descname">u32</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#u32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.u32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 32bit data with little endian.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>data (str): Data to unpack.</dd>
+<dt>Return:</dt>
+<dd>int: Unpacked value.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.core.u64">
+<code class="descclassname">heapinspect.core.</code><code class="descname">u64</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/core.html#u64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.core.u64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack 64bit data with little endian.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>data (str): Data to unpack.</dd>
+<dt>Return:</dt>
+<dd>int: Unpacked value.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-heapinspect.libc">
+<span id="heapinspect-libc-module"></span><h2>heapinspect.libc module<a class="headerlink" href="#module-heapinspect.libc" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="heapinspect.libc.build_helper">
+<code class="descclassname">heapinspect.libc.</code><code class="descname">build_helper</code><span class="sig-paren">(</span><em>out_dir</em>, <em>size_t=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/libc.html#build_helper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.libc.build_helper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use gcc to build libc_info.c</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>The binary name is ‘helper’.</dd>
+<dt>Args:</dt>
+<dd>out_dir (str): Path of the output dir.</dd>
+<dt>Returns:</dt>
+<dd>str: The Path of the compiled libc_info.c</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.libc.get_arch">
+<code class="descclassname">heapinspect.libc.</code><code class="descname">get_arch</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/libc.html#get_arch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.libc.get_arch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the arch of the binary.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>path (str): The absolute/relative path to the binary.</dd>
+<dt>Returns:</dt>
+<dd>str: the arch of the binary, 32 or 64.</dd>
+<dt>Raises:</dt>
+<dd>NotImplememtedError: if the arch is not x86 or x64.</dd>
+<dt>Examples:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">get_arch</span><span class="p">(</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">))</span>
+<span class="go">64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">get_arch</span><span class="p">(</span><span class="s1">&#39;./a_32bit_bin&#39;</span><span class="p">))</span>
+<span class="go">32</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.libc.get_arena_info">
+<code class="descclassname">heapinspect.libc.</code><code class="descname">get_arena_info</code><span class="sig-paren">(</span><em>libc_path</em>, <em>size_t=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/libc.html#get_arena_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.libc.get_arena_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the main arena infomation of the libc.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>libc_path (str): Path to the libc.
+size_t (int): 8 for 64 bit version, 4 for 32 bit.</dd>
+<dt>Returns:</dt>
+<dd>dict: like {‘main_arena_offset’:0x1e430, ‘tcache_enable’:False}</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.libc.get_libc_info">
+<code class="descclassname">heapinspect.libc.</code><code class="descname">get_libc_info</code><span class="sig-paren">(</span><em>libc_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/libc.html#get_libc_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.libc.get_libc_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the infomation of the libc.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>libc_path (str): Path to the libc.</dd>
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>dict: like {‘main_arena_offset’:0x1e430, ‘tcache_enable’:True,</dt>
+<dd>‘version’:2.27}</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.libc.get_libc_version">
+<code class="descclassname">heapinspect.libc.</code><code class="descname">get_libc_version</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/libc.html#get_libc_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.libc.get_libc_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the libc version.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>path (str): Path to the libc.</dd>
+<dt>Returns:</dt>
+<dd>str: Libc version. Like ‘2.29’, ‘2.26’ …</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-heapinspect.proc">
+<span id="heapinspect-proc-module"></span><h2>heapinspect.proc module<a class="headerlink" href="#module-heapinspect.proc" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt id="heapinspect.proc.LIBC_REGEX">
+<code class="descclassname">heapinspect.proc.</code><code class="descname">LIBC_REGEX</code><em class="property"> = '^[^\x00]*libc(?:-[\\d\\.]+)?\\.so(?:\\.6)?$'</em><a class="headerlink" href="#heapinspect.proc.LIBC_REGEX" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: The regex to match glibc.</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>The glibc basename should be like libc.so.6, libc-2.23.so, libc.so.</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="heapinspect.proc.Map">
+<em class="property">class </em><code class="descclassname">heapinspect.proc.</code><code class="descname">Map</code><span class="sig-paren">(</span><em>start</em>, <em>end</em>, <em>perm</em>, <em>mapname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for recording one virtual memory map of a process.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>start (int): The start position of the map.
+end (int): The end position of the map.
+perm (str): The permission of the map, like r-x, rwx, –x.
+mapname (str): The map name. Usually the path of a binary.</dd>
+<dt>Args:</dt>
+<dd>start (int): Start position.
+end (int): End positon.
+perm (str): Permission str.
+mapname (str): Map name.</dd>
+</dl>
+<dl class="method">
+<dt id="heapinspect.proc.Map.isin">
+<code class="descname">isin</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Map.isin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Map.isin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the address is in the map.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>addr (int): The address to check.</dd>
+<dt>Returns:</dt>
+<dd>bool: True if in, false if not in.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.proc.Map.range">
+<code class="descname">range</code><a class="headerlink" href="#heapinspect.proc.Map.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>tuple(int): The range of the map. A tuple of start and end.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="heapinspect.proc.Proc">
+<em class="property">class </em><code class="descclassname">heapinspect.proc.</code><code class="descname">Proc</code><span class="sig-paren">(</span><em>pid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Class to handle everything of a process.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>pid (int): The pid of the process.
+arch (str): The arch of the process.</dd>
+<dt>Args:</dt>
+<dd>pid (int): The pid of the process.</dd>
+</dl>
+<dl class="attribute">
+<dt id="heapinspect.proc.Proc.bases">
+<code class="descname">bases</code><a class="headerlink" href="#heapinspect.proc.Proc.bases" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: Start addresses of the maps.</p>
+<dl class="docutils">
+<dt>Examples:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Proc</span><span class="p">(</span><span class="mi">123</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+<span class="go">{</span>
+<span class="go">    &#39;prog&#39;: 94107400671232,</span>
+<span class="go">    &#39;stack&#39;: 140725576220672,</span>
+<span class="go">    &#39;libc&#39;: 140274092433408,</span>
+<span class="go">    &#39;ld-2.27.so&#39;: 140274098434048,</span>
+<span class="go">    &#39;heap&#39;: 94107411861504,</span>
+<span class="go">    &#39;mapped&#39;: 94107401531392,</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.proc.Proc.libc">
+<code class="descname">libc</code><a class="headerlink" href="#heapinspect.proc.Proc.libc" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: The path to the glibc of the process.</p>
+<dl class="docutils">
+<dt>Raises:</dt>
+<dd>Exception: if cannot find the glibc.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.proc.Proc.path">
+<code class="descname">path</code><a class="headerlink" href="#heapinspect.proc.Proc.path" title="Permalink to this definition">¶</a></dt>
+<dd><p>str: The path to the binary of the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.proc.Proc.ranges">
+<code class="descname">ranges</code><a class="headerlink" href="#heapinspect.proc.Proc.ranges" title="Permalink to this definition">¶</a></dt>
+<dd><p>dict: A dict of the range of maps.</p>
+<dl class="docutils">
+<dt>Examples:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Proc</span><span class="p">(</span><span class="mi">123</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">ranges</span><span class="p">)</span>
+<span class="go">{&#39;mapped&#39;: [</span>
+<span class="go">    [94107401531392, 94107401613312],</span>
+<span class="go">    [140274090311680, 140274090315776]</span>
+<span class="go">    ],</span>
+<span class="go"> &#39;libc&#39;: [[140274092433408, 140274094239744]],</span>
+<span class="go"> &#39;prog&#39;: [[94107400671232, 94107401531392]],</span>
+<span class="go"> &#39;stack&#39;: [[140725576220672, 140725576503296]],</span>
+<span class="go"> &#39;heap&#39;: [[94107411861504, 94107414138880]],</span>
+<span class="go"> &#39;libpthread-2.27.so&#39;: [[140274092290048, 140274092408832]]}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>addr</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read from the memory of the process.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>addr (int): The start address.
+size (int): The size to read.</dd>
+<dt>Returns:</dt>
+<dd>str: The readed memory. return ‘’ if error.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.search_in_all">
+<code class="descname">search_in_all</code><span class="sig-paren">(</span><em>search</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.search_in_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.search_in_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search in all memory.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>search (int or str): The content to search.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.search_in_heap">
+<code class="descname">search_in_heap</code><span class="sig-paren">(</span><em>search</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.search_in_heap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.search_in_heap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search in heap.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>search (int or str): The content to search.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.search_in_libc">
+<code class="descname">search_in_libc</code><span class="sig-paren">(</span><em>search</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.search_in_libc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.search_in_libc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search in libc.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>search (int or str): The content to search.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.search_in_prog">
+<code class="descname">search_in_prog</code><span class="sig-paren">(</span><em>search</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.search_in_prog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.search_in_prog" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search in prog.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>search (int or str): The content to search.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.search_in_stack">
+<code class="descname">search_in_stack</code><span class="sig-paren">(</span><em>search</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.search_in_stack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.search_in_stack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search in stack.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>search (int or str): The content to search.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.searchmem">
+<code class="descname">searchmem</code><span class="sig-paren">(</span><em>start</em>, <em>end</em>, <em>search</em>, <em>mem=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.searchmem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.searchmem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Memory search.</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>This function is converted from peda</dd>
+<dt>Args:</dt>
+<dd>start (int): Start position.
+end (int): End position.
+search (int or str): The content to search
+mem (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>, optional): Memory to search. Default is reading
+from the memory.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+<dt>Examples:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Proc</span><span class="p">(</span><span class="mi">123</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">ranges</span><span class="p">[</span><span class="s1">&#39;libc&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">searchmem</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="s1">&#39;/bin/sh&#39;</span><span class="p">))</span>
+<span class="go">[(140274094003571, &#39;2f62696e2f7368&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">searchmem</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="s1">&#39;0x9090&#39;</span><span class="p">))</span>
+<span class="go">[(140274092493384, &#39;9090&#39;),</span>
+<span class="go">(140274092654511, &#39;9090&#39;),</span>
+<span class="go">(140274092654852, &#39;9090&#39;),</span>
+<span class="go">(140274092933110, &#39;9090&#39;),</span>
+<span class="go">(140274093267009, &#39;9090&#39;),</span>
+<span class="go">(140274093598894, &#39;9090&#39;),</span>
+<span class="go">(140274094170352, &#39;9090&#39;),</span>
+<span class="go">(140274094217264, &#39;9090&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">searchmem</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="mh">0x1234</span><span class="p">))</span>
+<span class="go">[(140274092640228, &#39;3412&#39;),</span>
+<span class="go">(140274093007354, &#39;3412&#39;),</span>
+<span class="go">(140274093159881, &#39;3412&#39;),</span>
+<span class="go">(140274094051328, &#39;3412&#39;),</span>
+<span class="go">(140274094056312, &#39;3412&#39;),</span>
+<span class="go">(140274094066740, &#39;3412&#39;)]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.searchmem_by_mapname">
+<code class="descname">searchmem_by_mapname</code><span class="sig-paren">(</span><em>mapname</em>, <em>search</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.searchmem_by_mapname"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.searchmem_by_mapname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search by mapname.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>search (int or str): The content to search.
+mapname (str): The mapname to search.</dd>
+<dt>Returns:</dt>
+<dd>list: Search result.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="heapinspect.proc.Proc.vmmap">
+<code class="descname">vmmap</code><a class="headerlink" href="#heapinspect.proc.Proc.vmmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>list(<cite>Map</cite>): The vmmap of the process.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="heapinspect.proc.Proc.whereis">
+<code class="descname">whereis</code><span class="sig-paren">(</span><em>addr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#Proc.whereis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.Proc.whereis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the map name of the addr.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>addr (int): The address to locate.</dd>
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>str: The map name, ‘’ if not found. Note that</dt>
+<dd>libc, prog, stack, heap and mapped are default names
+and other dynamic libraries will return its basename.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.proc.get_arch">
+<code class="descclassname">heapinspect.proc.</code><code class="descname">get_arch</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#get_arch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.get_arch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the arch of the binary.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>path (str): The absolute/relative path to the binary.</dd>
+<dt>Returns:</dt>
+<dd>str: the arch of the binary, 32 or 64.</dd>
+<dt>Raises:</dt>
+<dd>NotImplememtedError: if the arch is not x86 or x64.</dd>
+<dt>Examples:</dt>
+<dd><div class="first last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">get_arch</span><span class="p">(</span><span class="s1">&#39;/bin/sh&#39;</span><span class="p">))</span>
+<span class="go">64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">get_arch</span><span class="p">(</span><span class="s1">&#39;./a_32bit_bin&#39;</span><span class="p">))</span>
+<span class="go">32</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="heapinspect.proc.vmmap">
+<code class="descclassname">heapinspect.proc.</code><code class="descname">vmmap</code><span class="sig-paren">(</span><em>pid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heapinspect/proc.html#vmmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#heapinspect.proc.vmmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the vmmap of a process.</p>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>This code is converted from vmmap of peda.</dd>
+<dt>Args:</dt>
+<dd>pid (int): The pid of a process.</dd>
+<dt>Returns:</dt>
+<dd>list (<cite>Map</cite>): A list of class Map.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-heapinspect">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-heapinspect" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">HeapInspect</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, matrix1001.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/HeapInspect.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

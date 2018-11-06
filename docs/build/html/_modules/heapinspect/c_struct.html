@@ -1,0 +1,497 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>heapinspect.c_struct &#8212; HeapInspect 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for heapinspect.c_struct</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<div class="viewcode-block" id="u64"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.u64">[docs]</a><span class="k">def</span> <span class="nf">u64</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 64bit data with little endian.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (str): Data to unpack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        int: Unpacked value.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;Q&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="u32"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.u32">[docs]</a><span class="k">def</span> <span class="nf">u32</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 32bit data with little endian.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (str): Data to unpack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        int: Unpacked value.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="p64"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.p64">[docs]</a><span class="k">def</span> <span class="nf">p64</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 64bit int with little endian to data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        int: Value to pack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        data (str): Packed data.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;Q&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="p32"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.p32">[docs]</a><span class="k">def</span> <span class="nf">p32</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 32bit int with little endian to data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        int: Value to pack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        data (str): Packed data.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="C_Struct"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.C_Struct">[docs]</a><span class="k">class</span> <span class="nc">C_Struct</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;This class handles memory dump of c structure.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        _arch (str): &#39;32&#39; or &#39;64&#39;.</span>
+<span class="sd">        _vars (list): List of vars.</span>
+<span class="sd">        _dict (dict): Dict of vars.</span>
+<span class="sd">        _addr (ind): The start address of the memory dump.</span>
+<span class="sd">        other (str): Defined by `_code`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        code (str): The core of C_Struct, check example.</span>
+<span class="sd">        arch (:obj:str, optional): The arch of target. &#39;64&#39; by default.</span>
+<span class="sd">        Also support &#39;32&#39;.</span>
+<span class="sd">        endian (:obj:`str`, optional): The endian. &#39;little&#39; by default.</span>
+<span class="sd">        Not support &#39;big&#39; yet.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        NotImplementedError: If arch is not &#39;64&#39; or &#39;32&#39;.</span>
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; code = &#39;struct test{int a; char b[10];}&#39;</span>
+<span class="sd">        &gt;&gt;&gt; test = C_Struct(code)</span>
+<span class="sd">        &gt;&gt;&gt; print(test._vars)</span>
+<span class="sd">        [(&#39;int&#39;, &#39;a&#39;, 1), (&#39;char&#39;, &#39;b&#39;, 10)]</span>
+<span class="sd">        &gt;&gt;&gt; print(test.dict)</span>
+<span class="sd">        {&#39;a&#39;: {&#39;memdump&#39;: &#39;&#39;, &#39;num&#39;: 1, &#39;typ&#39;: &#39;int&#39;},</span>
+<span class="sd">         &#39;b&#39;: {&#39;memdump&#39;: &#39;&#39;, &#39;num&#39;: 10, &#39;typ&#39;: &#39;char&#39;}}</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="s1">&#39;64&#39;</span><span class="p">,</span> <span class="n">endian</span><span class="o">=</span><span class="s1">&#39;little&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;64&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;bool&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;byte&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;char&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;int&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s1">&#39;ptr&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+                <span class="s1">&#39;size_t&#39;</span><span class="p">:</span> <span class="mi">8</span>
+            <span class="p">}</span>
+        <span class="k">elif</span> <span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;32&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;bool&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;byte&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;char&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s1">&#39;int&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s1">&#39;ptr&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s1">&#39;size_t&#39;</span><span class="p">:</span> <span class="mi">4</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not supported arch for C_Struct&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_arch</span> <span class="o">=</span> <span class="n">arch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_endian</span> <span class="o">=</span> <span class="n">endian</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_code</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_struct_name</span> <span class="o">=</span> \
+            <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;^\s*struct\s+(\w+)\s*{&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span><span class="o">.</span><span class="n">groups</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;\s*(\w*)\ (\w*)\[?(\d+)?\]?;&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+            <span class="n">typ</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">num</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_vars</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">typ</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">num</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vars</span><span class="p">:</span>
+            <span class="n">typ</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">num</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;typ&quot;</span><span class="p">:</span> <span class="n">typ</span><span class="p">,</span> <span class="s2">&quot;memdump&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;num&quot;</span><span class="p">:</span> <span class="n">num</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mem</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;int: The size of the structure.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vars</span><span class="p">:</span>
+            <span class="n">typ</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">num</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span> <span class="o">*</span> <span class="n">num</span>
+        <span class="k">return</span> <span class="n">size</span>
+
+    <span class="k">def</span> <span class="nf">_offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get the offset of a var.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            var (str): Var name. Also support index like &#39;list[10]&#39;.</span>
+<span class="sd">        Return:</span>
+<span class="sd">            int: The offset of the var.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">var_name</span><span class="p">,</span> <span class="n">var_index</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;^(\w*)\[?(\d+)?\]?$&#39;</span><span class="p">,</span> <span class="n">var</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">var_index</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">var_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">var_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">var_index</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vars</span><span class="p">:</span>
+            <span class="n">typ</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">num</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">var_name</span><span class="p">:</span>
+                <span class="n">offset</span> <span class="o">+=</span> <span class="n">var_index</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span>
+                <span class="k">break</span>
+            <span class="n">offset</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span> <span class="o">*</span> <span class="n">num</span>
+        <span class="k">return</span> <span class="n">offset</span>
+
+    <span class="k">def</span> <span class="nf">_addrof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get the address of a var.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            var (str): Var name. Also support index like &#39;list[10]&#39;.</span>
+<span class="sd">        Return:</span>
+<span class="sd">            int: The address of the var.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sizeof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get the size of a var.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            If var is a list name without index,</span>
+<span class="sd">            the entire list size will return.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            var (str): Var name. Also support index like &#39;list[10]&#39;.</span>
+<span class="sd">        Return:</span>
+<span class="sd">            int: The size of the var.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">var_name</span><span class="p">,</span> <span class="n">var_index</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;^(\w*)\[?(\d+)?\]?$&#39;</span><span class="p">,</span> <span class="n">var</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;typ&#39;</span><span class="p">]</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;num&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">var_index</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>   <span class="c1"># get total size</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span> <span class="o">*</span> <span class="n">num</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span>  <span class="c1"># get one size</span>
+
+    <span class="k">def</span> <span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memdump</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Method to initialize the structure.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            memdump (str): The memory dump of the struture.</span>
+<span class="sd">            addr (int): The start address of the memory dump.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># assert len(memdump) &gt;= self.size</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">memdump</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">:</span>
+            <span class="n">memdump</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vars</span><span class="p">:</span>
+            <span class="n">typ</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">num</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizeof</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s1">&#39;memdump&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">memdump</span><span class="p">[</span><span class="n">offset</span><span class="p">:</span><span class="n">offset</span><span class="o">+</span><span class="n">size</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mem</span> <span class="o">=</span> <span class="n">memdump</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span> <span class="o">=</span> <span class="n">addr</span>
+
+    <span class="k">def</span> <span class="nf">_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Copy method of C_Struture.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">new_obj</span> <span class="o">=</span> <span class="n">C_Struct</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endian</span><span class="p">)</span>
+        <span class="n">new_obj</span><span class="o">.</span><span class="n">_init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mem</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_obj</span>
+
+    <span class="k">def</span> <span class="nf">_new</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memdump</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Generating new instance of the structure.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This is important method of C_Struct. Normally a C_Struct</span>
+<span class="sd">            is used as generator, and use this method to genrate other</span>
+<span class="sd">            concret instances with memdump and address.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            memdump (str): Memory dump of the structure.</span>
+<span class="sd">            addr (int): Address of the structure.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            C_Struct: The new instance.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">new_obj</span> <span class="o">=</span> <span class="n">C_Struct</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_code</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endian</span><span class="p">)</span>
+        <span class="n">new_obj</span><span class="o">.</span><span class="n">_init</span><span class="p">(</span><span class="n">memdump</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_obj</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Get the value of a var in the structure.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Default methods and vars of C_Struct start with &#39;_&#39;.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            var_name (str): The var name.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            int or str or list: size_t, int and ptr will return a number.</span>
+<span class="sd">                Others will return its memdump. Array will return a list.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">:</span>
+            <span class="n">typ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;typ&#39;</span><span class="p">]</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;num&#39;</span><span class="p">]</span>
+            <span class="n">memdump</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">var_name</span><span class="p">][</span><span class="s1">&#39;memdump&#39;</span><span class="p">]</span>
+
+            <span class="n">a_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_typ2size</span><span class="p">[</span><span class="n">typ</span><span class="p">]</span>
+
+            <span class="n">unpack</span> <span class="o">=</span> <span class="nb">str</span>
+            <span class="k">if</span> <span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span><span class="p">:</span>
+                <span class="n">unpack</span> <span class="o">=</span> <span class="n">u32</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;size_t&#39;</span> <span class="ow">or</span> <span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;ptr&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arch</span> <span class="o">==</span> <span class="s1">&#39;32&#39;</span><span class="p">:</span>
+                <span class="n">unpack</span> <span class="o">=</span> <span class="n">u32</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;size_t&#39;</span> <span class="ow">or</span> <span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;ptr&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arch</span> <span class="o">==</span> <span class="s1">&#39;64&#39;</span><span class="p">:</span>
+                <span class="n">unpack</span> <span class="o">=</span> <span class="n">u64</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+                    <span class="n">mem</span> <span class="o">=</span> <span class="n">memdump</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">a_size</span><span class="p">:</span><span class="n">i</span><span class="o">*</span><span class="n">a_size</span><span class="o">+</span><span class="n">a_size</span><span class="p">]</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">unpack</span><span class="p">(</span><span class="n">mem</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">result</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">unpack</span><span class="p">(</span><span class="n">memdump</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="n">malloc_state_struct_new_64</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">struct malloc_state</span>
+<span class="s1">{</span>
+<span class="s1">    int mutex;</span>
+<span class="s1">    int flags;</span>
+<span class="s1">    int have_fastchunks;</span>
+<span class="s1">    int align;</span>
+<span class="s1">    ptr fastbinsY[10];</span>
+<span class="s1">    ptr top;</span>
+<span class="s1">    ptr last_remainder;</span>
+<span class="s1">    ptr bins[254];</span>
+<span class="s1">    int binmap[4];</span>
+<span class="s1">    ptr next;</span>
+<span class="s1">    ptr next_free;</span>
+<span class="s1">    size_t attached_threads;</span>
+<span class="s1">    size_t system_mem;</span>
+<span class="s1">    size_t max_system_mem;</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;str: malloc_state of glibc 2.27+ 64bit</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">malloc_state_struct_new_32</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">struct malloc_state</span>
+<span class="s1">{</span>
+<span class="s1">    int mutex;</span>
+<span class="s1">    int flags;</span>
+<span class="s1">    int have_fastchunks;</span>
+<span class="s1">    ptr fastbinsY[11];</span>
+<span class="s1">    ptr top;</span>
+<span class="s1">    ptr last_remainder;</span>
+<span class="s1">    ptr bins[254];</span>
+<span class="s1">    int binmap[4];</span>
+<span class="s1">    ptr next;</span>
+<span class="s1">    ptr next_free;</span>
+<span class="s1">    size_t attached_threads;</span>
+<span class="s1">    size_t system_mem;</span>
+<span class="s1">    size_t max_system_mem;</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;str: malloc_state of glibc 2.27+ 32bit</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">malloc_state_struct_old</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">struct malloc_state</span>
+<span class="s1">{</span>
+<span class="s1">    int mutex;</span>
+<span class="s1">    int flags;</span>
+<span class="s1">    ptr fastbinsY[10];</span>
+<span class="s1">    ptr top;</span>
+<span class="s1">    ptr last_remainder;</span>
+<span class="s1">    ptr bins[254];</span>
+<span class="s1">    int binmap[4];</span>
+<span class="s1">    ptr next;</span>
+<span class="s1">    ptr next_free;</span>
+<span class="s1">    size_t attached_threads;</span>
+<span class="s1">    size_t system_mem;</span>
+<span class="s1">    size_t max_system_mem;</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;str: malloc_state of glibc 2.19 - 2.26 64bit, 2.19 - 2.25 32bit.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">malloc_state_struct_26_32</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">struct malloc_state</span>
+<span class="s1">{</span>
+<span class="s1">    int mutex;</span>
+<span class="s1">    int flags;</span>
+<span class="s1">    ptr fastbinsY[11];</span>
+<span class="s1">    ptr top;</span>
+<span class="s1">    ptr last_remainder;</span>
+<span class="s1">    ptr bins[254];</span>
+<span class="s1">    int binmap[4];</span>
+<span class="s1">    ptr next;</span>
+<span class="s1">    ptr next_free;</span>
+<span class="s1">    size_t attached_threads;</span>
+<span class="s1">    size_t system_mem;</span>
+<span class="s1">    size_t max_system_mem;</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;str: malloc_state of glibc 2.26 32bit.</span>
+
+<span class="sd">Note:</span>
+<span class="sd">    malloc_state.fastbinsY is different from other glibc.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="n">malloc_chunk_struct</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">struct malloc_chunk</span>
+<span class="s1">{</span>
+<span class="s1">    size_t prev_size;</span>
+<span class="s1">    size_t size;</span>
+<span class="s1">    ptr fd;</span>
+<span class="s1">    ptr bk;</span>
+<span class="s1">    ptr fd_nextsize;</span>
+<span class="s1">    ptr bk_nextsize;</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;str: malloc_chunk</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="n">tcache_perthread_struct</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">struct tcache_perthread_struct</span>
+<span class="s1">{</span>
+<span class="s1">    char counts[64];</span>
+<span class="s1">    ptr entries[64];</span>
+<span class="s1">}</span>
+<span class="s1">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;str: tcache_perthread</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="malloc_state_generator"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.malloc_state_generator">[docs]</a><span class="k">def</span> <span class="nf">malloc_state_generator</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s1">&#39;2.27&#39;</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="s1">&#39;64&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Generate C_Struct of malloc_state (arena).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        version (str): glibc version,  &#39;2.19&#39; - &#39;2.28&#39;.</span>
+<span class="sd">        arch (str): &#39;64&#39; or &#39;32&#39;</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        C_Struct: The corresponding C_Struct.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;32&#39;</span> <span class="ow">and</span> <span class="n">version</span> <span class="o">==</span> <span class="s1">&#39;2.26&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">malloc_state_struct_26_32</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">version</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;2.27&#39;</span><span class="p">,</span> <span class="s1">&#39;2.28&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;64&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">malloc_state_struct_new_64</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;32&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">malloc_state_struct_new_32</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">malloc_state_struct_old</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="malloc_chunk_generator"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.malloc_chunk_generator">[docs]</a><span class="k">def</span> <span class="nf">malloc_chunk_generator</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s1">&#39;2.27&#39;</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="s1">&#39;64&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Generate C_Struct of malloc_chunk.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        version (str): glibc version,  &#39;2.19&#39; - &#39;2.28&#39;.</span>
+<span class="sd">        arch (str): &#39;64&#39; or &#39;32&#39;</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        C_Struct: The corresponding C_Struct.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">malloc_chunk_struct</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tcache_struct_generator"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.c_struct.tcache_struct_generator">[docs]</a><span class="k">def</span> <span class="nf">tcache_struct_generator</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s1">&#39;2.27&#39;</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="s1">&#39;64&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Generate C_Struct of tcache_perthread (tcache).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        version (str): glibc version,  &#39;2.19&#39; - &#39;2.28&#39;.</span>
+<span class="sd">        arch (str): &#39;64&#39; or &#39;32&#39;</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        C_Struct: The corresponding C_Struct.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">C_Struct</span><span class="p">(</span><span class="n">tcache_perthread_struct</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">HeapInspect</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, matrix1001.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

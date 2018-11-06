@@ -44,7 +44,7 @@ A quick use of this tool.
 Pretty easy to use. I will make it a package later.
 
 ```python
-from HeapInspect import *
+from heapinspect.core import *
 hi = HeapInspect(1234)       #pid here
 hs = HeapShower(hi)
 
@@ -95,7 +95,20 @@ chunk(0x7f9aae2e6300): prev_size=0x0      size=0xb1     fd=0x7f9aae2e6260  bk=0x
 chunk(0x7f9aae2e6250): prev_size=0x0      size=0xb1     fd=0x0             bk=0x0
 ```
 
+# Docs
+
+Detailed docstrings have been written into the source code.
+
+I have built a sphinx doc in `docs`. Just open [docs/build/html/index.html](docs/build/html/index.html).
+
 # Devlog
+
+## 2018/11/6 version 0.1.2
+
+docs update.
+
+- update sphinx docs
+- reshape file structure
 
 ## 2018/11/5 version 0.1.1
 

@@ -1,0 +1,735 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>heapinspect.core &#8212; HeapInspect 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for heapinspect.core</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/python2</span>
+<span class="kn">from</span> <span class="nn">proc</span> <span class="k">import</span> <span class="n">Proc</span>
+<span class="kn">from</span> <span class="nn">libc</span> <span class="k">import</span> <span class="n">get_libc_info</span> 
+<span class="kn">from</span> <span class="nn">c_struct</span> <span class="k">import</span> <span class="n">malloc_state_generator</span>
+<span class="kn">from</span> <span class="nn">c_struct</span> <span class="k">import</span> <span class="n">malloc_chunk_generator</span>
+<span class="kn">from</span> <span class="nn">c_struct</span> <span class="k">import</span> <span class="n">tcache_struct_generator</span>
+<span class="kn">from</span> <span class="nn">auxiliary.ezcolor</span> <span class="k">import</span> <span class="n">color</span>
+<span class="kn">from</span> <span class="nn">auxiliary.utils</span> <span class="k">import</span> <span class="n">terminal_size</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="u64"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.u64">[docs]</a><span class="k">def</span> <span class="nf">u64</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 64bit data with little endian.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (str): Data to unpack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        int: Unpacked value.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;Q&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="u32"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.u32">[docs]</a><span class="k">def</span> <span class="nf">u32</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 32bit data with little endian.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (str): Data to unpack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        int: Unpacked value.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="p64"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.p64">[docs]</a><span class="k">def</span> <span class="nf">p64</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 64bit int with little endian to data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        int: Value to pack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        data (str): Packed data.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;Q&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="p32"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.p32">[docs]</a><span class="k">def</span> <span class="nf">p32</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Unpack 32bit int with little endian to data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        int: Value to pack.</span>
+<span class="sd">    Return:</span>
+<span class="sd">        data (str): Packed data.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HeapInspector"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapInspector">[docs]</a><span class="k">class</span> <span class="nc">HeapInspector</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Core Class to parse heap and arena.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        pid (int): pid of the monitored process.</span>
+<span class="sd">        arch (str): &#39;32&#39; or &#39;64&#39;.</span>
+<span class="sd">        libc_path (str): Path to libc.</span>
+<span class="sd">        libc_version (str): Libc version like &#39;2.23&#39;.</span>
+<span class="sd">        libc_base (int): Start address of libc.</span>
+<span class="sd">        heap_base (int): Start address of heap. </span>
+<span class="sd">    Args:</span>
+<span class="sd">        pid (int): pid of the target process.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        NotImplementedError: for none supported arch.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pid</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc</span> <span class="o">=</span> <span class="n">Proc</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">arch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">libc_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">libc</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;32&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span> <span class="o">=</span> <span class="mi">4</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pack</span> <span class="o">=</span> <span class="n">p32</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unpack</span> <span class="o">=</span> <span class="n">u32</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;64&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span> <span class="o">=</span> <span class="mi">8</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pack</span> <span class="o">=</span> <span class="n">p64</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unpack</span> <span class="o">=</span> <span class="n">u64</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;invalid arch&#39;</span><span class="p">)</span>
+
+        <span class="n">libc_info</span> <span class="o">=</span> <span class="n">get_libc_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">libc_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">libc_version</span> <span class="o">=</span> <span class="n">libc_info</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tcache_enable</span> <span class="o">=</span> <span class="n">libc_info</span><span class="p">[</span><span class="s1">&#39;tcache_enable&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_arena_offset</span> <span class="o">=</span> <span class="n">libc_info</span><span class="p">[</span><span class="s1">&#39;main_arena_offset&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">libc_base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="s1">&#39;libc&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heap_base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="s1">&#39;heap&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">MallocState</span> <span class="o">=</span> <span class="n">malloc_state_generator</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">libc_version</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arch</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">MallocChunk</span> <span class="o">=</span> <span class="n">malloc_chunk_generator</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">libc_version</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arch</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TcacheStruct</span> <span class="o">=</span> <span class="n">tcache_struct_generator</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">libc_version</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arch</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;dict: vmmap ranges.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">ranges</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;dict: vmmap start addresses.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">heapmem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: heap memory dump.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">ranges</span><span class="p">[</span><span class="s1">&#39;heap&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arenamem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: main_arena memory dump.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">arena_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MallocState</span><span class="o">.</span><span class="n">_size</span>
+        <span class="n">arena_addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">libc_base</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_arena_offset</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">arena_addr</span><span class="p">,</span> <span class="n">arena_size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">main_arena</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;C_Struct: main_arena</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">heap_base</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># just a refresh in case that heap_base = 0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">heap_base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="s1">&#39;heap&#39;</span><span class="p">]</span>
+        <span class="n">arena_addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">libc_base</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_arena_offset</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">MallocState</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arenamem</span><span class="p">,</span> <span class="n">arena_addr</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tcache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;C_Struct: tcache perthread</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tcache_enable</span><span class="p">:</span>
+            <span class="n">testmem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="s1">&#39;heap&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">)</span>
+            <span class="c1"># this happens in some 32 bit libc heap</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">testmem</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">base_addr</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="s1">&#39;heap&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">base_addr</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="s1">&#39;heap&#39;</span><span class="p">]</span>
+
+            <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">base_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TcacheStruct</span><span class="o">.</span><span class="n">_size</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">TcacheStruct</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">base_addr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">heap_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;list(C_Struct): list of heap chunks.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">heap_mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">heapmem</span>
+        <span class="n">cur_pos</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="n">cur_pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">heap_mem</span><span class="p">):</span>
+            <span class="n">cur_block_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span>
+                <span class="n">heap_mem</span><span class="p">[</span><span class="n">cur_pos</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">:</span><span class="n">cur_pos</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">]</span>
+                <span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="mb">0b111</span>
+            <span class="c1"># this happens in some 32 bit libc heap</span>
+            <span class="k">if</span> <span class="n">cur_block_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">cur_pos</span> <span class="o">+=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span>
+                <span class="k">continue</span>
+            <span class="n">memblock</span> <span class="o">=</span> <span class="n">heap_mem</span><span class="p">[</span><span class="n">cur_pos</span><span class="p">:</span><span class="n">cur_pos</span><span class="o">+</span><span class="n">cur_block_size</span><span class="p">]</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MallocChunk</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span>
+                    <span class="n">memblock</span><span class="p">,</span>
+                    <span class="n">cur_pos</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">heap_base</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;64&#39;</span><span class="p">:</span>
+                <span class="n">cur_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur_pos</span><span class="o">+</span><span class="n">cur_block_size</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="mb">0b1111</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="s1">&#39;32&#39;</span><span class="p">:</span>
+                <span class="n">cur_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur_pos</span><span class="o">+</span><span class="n">cur_block_size</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="mb">0b111</span>
+            <span class="k">if</span> <span class="n">cur_block_size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tcache_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;dict: dict of tcache_chunks.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tcache_enable</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">entry_ptr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tcache</span><span class="o">.</span><span class="n">entries</span><span class="p">):</span>
+            <span class="n">lst</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">tranversed</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">while</span> <span class="n">entry_ptr</span><span class="p">:</span>
+                <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">entry_ptr</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">)</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MallocChunk</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">entry_ptr</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">)</span>
+                <span class="n">lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="n">entry_ptr</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">fd</span>
+                <span class="k">if</span> <span class="n">entry_ptr</span> <span class="ow">in</span> <span class="n">tranversed</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tranversed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry_ptr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lst</span> <span class="o">!=</span> <span class="p">[]:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">lst</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;dict: dict of fastbins.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">fastbin_head</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_arena</span><span class="o">.</span><span class="n">fastbinsY</span><span class="p">):</span>
+            <span class="n">fastbin_ptr</span> <span class="o">=</span> <span class="n">fastbin_head</span>
+            <span class="n">lst</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">tranversed</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">while</span> <span class="n">fastbin_ptr</span><span class="p">:</span>
+                <span class="n">mem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">fastbin_ptr</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">size_t</span><span class="p">)</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MallocChunk</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">fastbin_ptr</span><span class="p">)</span>
+                <span class="n">lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="n">fd</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">fd</span>
+                <span class="n">fastbin_ptr</span> <span class="o">=</span> <span class="n">fd</span>
+                <span class="k">if</span> <span class="n">fastbin_ptr</span> <span class="ow">in</span> <span class="n">tranversed</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tranversed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fastbin_ptr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lst</span> <span class="o">!=</span> <span class="p">[]:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">lst</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unsortedbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;list: list of unsortedbins.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">!=</span> <span class="p">{}:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="HeapInspector.bins"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapInspector.bins">[docs]</a>    <span class="k">def</span> <span class="nf">bins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">127</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mh">0x20</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Generate bins of the arena.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            malloc_state has 127 bins. bins[0] is unsortedbins,</span>
+<span class="sd">            bins[1] - bins[62] are smallbins,</span>
+<span class="sd">            bins[63] - bins[126] are largebins.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            strat (:obj:`int`, optional): Start positions.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+            <span class="n">lst</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">tranversed</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">head_chunk_addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main_arena</span><span class="o">.</span><span class="n">_addrof</span><span class="p">(</span>
+                <span class="s1">&#39;bins[</span><span class="si">{}</span><span class="s1">]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span>
+
+            <span class="n">chunk_ptr</span> <span class="o">=</span> <span class="n">head_chunk_addr</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MallocChunk</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_ptr</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">),</span> <span class="n">chunk_ptr</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">chunk</span><span class="o">.</span><span class="n">bk</span> <span class="o">!=</span> <span class="n">head_chunk_addr</span><span class="p">:</span>
+                <span class="n">chunk_ptr</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">bk</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MallocChunk</span><span class="o">.</span><span class="n">_new</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">proc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_ptr</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">),</span>
+                    <span class="n">chunk_ptr</span><span class="p">)</span>
+                <span class="n">lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">chunk</span><span class="o">.</span><span class="n">bk</span> <span class="ow">in</span> <span class="n">tranversed</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tranversed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">bk</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lst</span> <span class="o">!=</span> <span class="p">[]:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">lst</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">smallbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;dict: dict of smallbins.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">63</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">largebins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;dict: dict of largebins.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">127</span><span class="p">,</span> <span class="mh">0x30</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">record</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;HeapRecorder: A record.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">HeapRecorder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HeapRecorder"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapRecorder">[docs]</a><span class="k">class</span> <span class="nc">HeapRecorder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;This Class is implemented for recoding the state of HeapInspector.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hi (HeapInspector): the HeapInspector instance.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hi</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">pid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">arch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">libc_version</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">libc_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tcache_enable</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">tcache_enable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">libc_path</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">libc_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">path</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_t</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">size_t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pack</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">pack</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unpack</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">unpack</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_arena</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">main_arena</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tcache</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">tcache</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">heap_chunks</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">heap_chunks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fastbins</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">fastbins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unsortedbins</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">unsortedbins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smallbins</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">smallbins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">largebins</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">largebins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tcache_chunks</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">tcache_chunks</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">libc_base</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">libc_base</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heap_base</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">heap_base</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">bases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">ranges</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">record</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="HeapShower"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower">[docs]</a><span class="k">class</span> <span class="nc">HeapShower</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Print heap and arena information in detailed mode.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hi (HeapInspector or HeapRecord): HeapInspector or HeapRecord.</span>
+<span class="sd">        relative (bool): Show relative addresses.</span>
+<span class="sd">        w_limit_size (int): Data size limit.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">w_limit_size</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hi</span> <span class="o">=</span> <span class="n">hi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">record</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative</span> <span class="o">=</span> <span class="n">relative</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_limit_size</span> <span class="o">=</span> <span class="n">w_limit_size</span>
+
+<div class="viewcode-block" id="HeapShower.update"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Update the HeapRecord.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hi</span><span class="o">.</span><span class="n">record</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">heap_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: formated heapchunks str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">heap_chunks</span><span class="p">,</span> <span class="s1">&#39;heapchunks&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: formated fastbins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed_chunks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">fastbins</span><span class="p">,</span> <span class="s1">&#39;fastbins&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unsortedbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: formated unsortedbins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">unsortedbins</span><span class="p">,</span> <span class="s1">&#39;unsortedbins&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">smallbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: formated smallbins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed_chunks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">smallbins</span><span class="p">,</span> <span class="s1">&#39;smallbins&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">largebins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: formated largebins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed_chunks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">largebins</span><span class="p">,</span> <span class="s1">&#39;largebins&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mh">0x3f</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tcache_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: formated tcache chunks str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexed_chunks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">tcache_chunks</span><span class="p">,</span> <span class="s1">&#39;tcache&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="HeapShower.chunks"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.chunks">[docs]</a>    <span class="k">def</span> <span class="nf">chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunks</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">banner</span><span class="p">(</span><span class="n">typ</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">banner</span><span class="p">(</span><span class="s1">&#39;relative &#39;</span> <span class="o">+</span> <span class="n">typ</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rela_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.indexed_chunks"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.indexed_chunks">[docs]</a>    <span class="k">def</span> <span class="nf">indexed_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk_dict</span><span class="p">,</span> <span class="n">typ</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">banner</span><span class="p">(</span><span class="n">typ</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chunk_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="n">chunks</span> <span class="o">=</span> <span class="n">chunk_dict</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">banner_index</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">index</span><span class="o">+</span><span class="n">align</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;largebins&#39;</span><span class="p">:</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">large_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">banner</span><span class="p">(</span><span class="s1">&#39;relative &#39;</span> <span class="o">+</span> <span class="n">typ</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chunk_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">banner_index</span><span class="p">(</span><span class="s1">&#39;relative &#39;</span> <span class="o">+</span> <span class="n">typ</span><span class="p">,</span> <span class="n">index</span><span class="o">+</span><span class="n">align</span><span class="p">))</span>
+                <span class="n">chunks</span> <span class="o">=</span> <span class="n">chunk_dict</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">typ</span> <span class="o">==</span> <span class="s1">&#39;largebins&#39;</span><span class="p">:</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rela_large_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rela_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.banner"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.banner">[docs]</a>    <span class="k">def</span> <span class="nf">banner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">banner</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">terminal_size</span><span class="p">()</span>
+        <span class="k">return</span> <span class="s1">&#39;{:=^</span><span class="si">{width}</span><span class="s1">}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;  </span><span class="si">{}</span><span class="s1">  &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">banner</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.banner_index"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.banner_index">[docs]</a>    <span class="k">def</span> <span class="nf">banner_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">banner</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{:}</span><span class="s1">[</span><span class="si">{:}</span><span class="s1">]:&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">banner</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.chunk"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.chunk">[docs]</a>    <span class="k">def</span> <span class="nf">chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;chunk(</span><span class="si">{:#x}</span><span class="s2">): prev_size=</span><span class="si">{:&lt;8}</span><span class="s2"> size=</span><span class="si">{:&lt;#8x}</span><span class="s2"> fd=</span><span class="si">{:&lt;#15x}</span><span class="s2"> bk=</span><span class="si">{:&lt;#15x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_limit</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">prev_size</span><span class="p">),</span> <span class="n">chunk</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">chunk</span><span class="o">.</span><span class="n">fd</span><span class="p">,</span> <span class="n">chunk</span><span class="o">.</span><span class="n">bk</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.large_chunk"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.large_chunk">[docs]</a>    <span class="k">def</span> <span class="nf">large_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;chunk(</span><span class="si">{:#x}</span><span class="s2">): prev_size=</span><span class="si">{:&lt;8}</span><span class="s2"> size=</span><span class="si">{:&lt;#8x}</span><span class="s2"> fd=</span><span class="si">{:&lt;#15x}</span><span class="s2"> bk=</span><span class="si">{:&lt;#15x}</span><span class="s2"> fd_nextsize=</span><span class="si">{:&lt;#15x}</span><span class="s2"> bk_nextsize=</span><span class="si">{:&lt;#15x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_limit</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">prev_size</span><span class="p">),</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">fd</span><span class="p">,</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">bk</span><span class="p">,</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">fd_nextsize</span><span class="p">,</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">bk_nextsize</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.rela_chunk"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.rela_chunk">[docs]</a>    <span class="k">def</span> <span class="nf">rela_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;chunk(</span><span class="si">{:&lt;13}</span><span class="s2">): prev_size=</span><span class="si">{:&lt;8}</span><span class="s2"> size=</span><span class="si">{:&lt;#8x}</span><span class="s2"> fd=</span><span class="si">{:&lt;13}</span><span class="s2"> bk=</span><span class="si">{:&lt;13}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_limit</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">prev_size</span><span class="p">),</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">fd</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">bk</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="HeapShower.rela_large_chunk"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.rela_large_chunk">[docs]</a>    <span class="k">def</span> <span class="nf">rela_large_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;chunk(</span><span class="si">{:&lt;13}</span><span class="s2">): prev_size=</span><span class="si">{:&lt;8}</span><span class="s2"> size=</span><span class="si">{:&lt;#8x}</span><span class="s2"> fd=</span><span class="si">{:&lt;13}</span><span class="s2"> bk=</span><span class="si">{:&lt;13}</span><span class="s2"> fd_nextsize=</span><span class="si">{:&lt;13}</span><span class="s2"> bk_nextsize=</span><span class="si">{:&lt;13}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_limit</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">prev_size</span><span class="p">),</span>
+            <span class="n">chunk</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">fd</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">bk</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">fd_nextsize</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rela_str</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">bk_nextsize</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="HeapShower.relative_addr"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.relative_addr">[docs]</a>    <span class="k">def</span> <span class="nf">relative_addr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="n">mapname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">whereis</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mapname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">bases</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">mapname</span><span class="p">,</span> <span class="n">addr</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">bases</span><span class="p">[</span><span class="n">mapname</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.rela_str"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.rela_str">[docs]</a>    <span class="k">def</span> <span class="nf">rela_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_addr</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;+&#39;</span><span class="o">+</span><span class="nb">hex</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HeapShower.w_limit"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.w_limit">[docs]</a>    <span class="k">def</span> <span class="nf">w_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">hex</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_limit_size</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;..&#39;</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="HeapShower.whereis"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.HeapShower.whereis">[docs]</a>    <span class="k">def</span> <span class="nf">whereis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">mapname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">ranges</span><span class="p">:</span>
+            <span class="n">lst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">ranges</span><span class="p">[</span><span class="n">mapname</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">addr</span> <span class="o">&lt;</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="k">return</span> <span class="n">mapname</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span></div></div>
+
+
+<div class="viewcode-block" id="PrettyPrinter"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.PrettyPrinter">[docs]</a><span class="k">class</span> <span class="nc">PrettyPrinter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Pretty Printer for HeapInspector.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        With the shortage of not able to show enough infomation.</span>
+<span class="sd">        Use HeapShower for detailed infomation.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        hi (HeapInspector or HeapRecord): HeapInspector or HeapRecord.</span>
+<span class="sd">        relative (bool): Show relative addresses.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hi</span> <span class="o">=</span> <span class="n">hi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="n">hi</span><span class="o">.</span><span class="n">record</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative</span> <span class="o">=</span> <span class="n">relative</span>
+
+<div class="viewcode-block" id="PrettyPrinter.update"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.PrettyPrinter.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Update the HeapRecord.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hi</span><span class="o">.</span><span class="n">record</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: pretty formated fastbins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">header_fmt</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">(</span><span class="s1">&#39;(</span><span class="si">{size:#x}</span><span class="s1">)    fastbins[</span><span class="si">{index}</span><span class="s1">] &#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">fastbins</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">size_t</span> <span class="o">*</span> <span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">fastbins</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">tail</span> <span class="o">+=</span> <span class="s2">&quot;-&gt; &quot;</span> <span class="o">+</span> <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:#x}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">))</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">header_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="n">tail</span>
+            <span class="k">if</span> <span class="n">tail</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unsortedbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: pretty formated unsortedbins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">magenta</span><span class="p">(</span><span class="s1">&#39;unsortedbins: &#39;</span><span class="p">)</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">unsortedbins</span><span class="p">:</span>
+            <span class="n">tail</span> <span class="o">+=</span> <span class="s1">&#39;&lt;-&gt; &#39;</span> <span class="o">+</span> <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:#x}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">tail</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s1">&#39;None&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">head</span><span class="o">+</span><span class="n">tail</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">smallbins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: pretty formated smallbins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">header_fmt</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">(</span><span class="s1">&#39;(</span><span class="si">{size:#x}</span><span class="s1">)    smallbins[</span><span class="si">{index}</span><span class="s1">] &#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">smallbins</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">size_t</span> <span class="o">*</span> <span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">smallbins</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">tail</span> <span class="o">+=</span> <span class="s2">&quot;&lt;-&gt; &quot;</span> <span class="o">+</span> <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:#x}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">))</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">header_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">tail</span>
+            <span class="k">if</span> <span class="n">tail</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">largebins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: pretty formated largebins str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">header_fmt</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">(</span><span class="s1">&#39;largebins[</span><span class="si">{index}</span><span class="s1">] &#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">largebins</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">size_t</span> <span class="o">*</span> <span class="p">(</span><span class="n">index</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">largebins</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">tail</span> <span class="o">+=</span> <span class="s2">&quot;&lt;-&gt; &quot;</span> <span class="o">+</span> \
+                    <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span>
+                        <span class="s2">&quot;</span><span class="si">{:#x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="p">)</span> <span class="o">+</span>
+                        <span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">(</span><span class="s2">&quot;(</span><span class="si">{:#x}</span><span class="s2">) &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">size</span> <span class="o">&amp;</span> <span class="o">~</span><span class="mb">0b111</span><span class="p">))</span>
+                        <span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">header_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="o">-</span><span class="mh">0x3f</span><span class="p">)</span> <span class="o">+</span> <span class="n">tail</span>
+            <span class="k">if</span> <span class="n">tail</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tcache_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: pretty formated tcache chunks str.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">header_fmt</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">yellow</span><span class="p">(</span><span class="s1">&#39;(</span><span class="si">{size:#x}</span><span class="s1">)    entries[</span><span class="si">{index}</span><span class="s1">] &#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">tcache_chunks</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">size_t</span> <span class="o">+</span> <span class="n">index</span><span class="o">*</span><span class="mh">0x10</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">tcache_chunks</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">tail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+                <span class="n">tail</span> <span class="o">+=</span> <span class="s2">&quot;-&gt; &quot;</span> <span class="o">+</span> <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:#x}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">chunk</span><span class="o">.</span><span class="n">_addr</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">size_t</span><span class="p">))</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">header_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="n">tail</span>
+            <span class="k">if</span> <span class="n">tail</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;str: pretty formated all infomation of heap.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">banner</span><span class="p">(</span><span class="s1">&#39;HeapInspect&#39;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">)]</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basic</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fastbins</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smallbins</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">largebins</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tcache_chunks</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">magenta</span><span class="p">(</span><span class="s1">&#39;top: &#39;</span><span class="p">)</span> <span class="o">+</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{:#x}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">main_arena</span><span class="o">.</span><span class="n">top</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">magenta</span><span class="p">(</span><span class="s1">&#39;last_remainder: &#39;</span><span class="p">)</span> <span class="o">+</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{:#x}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">main_arena</span><span class="o">.</span><span class="n">last_remainder</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unsortedbins</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">basic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;&#39;libc_version:</span><span class="si">{}</span><span class="s1"></span>
+<span class="s1">arch:</span><span class="si">{}</span><span class="s1"></span>
+<span class="s1">tcache_enable:</span><span class="si">{}</span><span class="s1"></span>
+<span class="s1">libc_base:</span><span class="si">{}</span><span class="s1"></span>
+<span class="s1">heap_base:</span><span class="si">{}</span><span class="s1">&#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">yellow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">libc_version</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">yellow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">arch</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">yellow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">tcache_enable</span><span class="p">),</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">libc_base</span><span class="p">)),</span>
+            <span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">(</span><span class="nb">hex</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">heap_base</span><span class="p">))</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="PrettyPrinter.banner"><a class="viewcode-back" href="../../HeapInspect.html#heapinspect.core.PrettyPrinter.banner">[docs]</a>    <span class="k">def</span> <span class="nf">banner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">color1</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">terminal_size</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">color</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">color1</span><span class="p">)(</span>
+            <span class="s1">&#39;{:=^</span><span class="si">{width}</span><span class="s1">}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;  </span><span class="si">{}</span><span class="s1">  &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">HeapInspect</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, matrix1001.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,5 +1,5 @@
 import argparse
-from heapinspect import *
+from heapinspect.core import *
 
 
 if __name__ == '__main__':
