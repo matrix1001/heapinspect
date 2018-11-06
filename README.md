@@ -71,7 +71,7 @@ pp.update()                  #use this to update
 There are some testcases.
 
 ```raw
-heapinspect $ python test.py  #this will run all test cases for you to check this tool.
+heapinspect/tests/ $ python test.py  #this will run all test cases for you to check this tool.
 
 ......
 ......
@@ -99,7 +99,7 @@ chunk(0x7f9aae2e6250): prev_size=0x0      size=0xb1     fd=0x0             bk=0x
 
 Detailed docstrings have been written into the source code.
 
-I have built a sphinx doc in `docs`. Just open [docs/build/html/index.html](docs/build/html/index.html).
+I have built a sphinx doc in `docs`. Just open `docs/build/html/index.html` with your browser.
 
 # Devlog
 
