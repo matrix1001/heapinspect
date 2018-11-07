@@ -1,30 +1,26 @@
 # HeapInspect
 
-Dynamically Inspect Heap In Python.
-Core concept is to inspect heap by a given pid. 
+_Pwnning is an art._
 
-**NO PTRACE, NO GDB, NO NEED OF LIBC**. 
+Ever since I started to learn pwnning, I struggled a lot with the complicated, unpredictable heap of glibc.
 
-Future use can fall in heap check and pwn exploration.
+In the old days I was always seating in front of my computer, watching a full screen of hex codes in gdb.
 
-However, I'm starting to work on it. Code is ugly and functions are not complete.
+However, those days never come back. `HeapInspect` is designed to make `heap` much more prettier.
 
-Best performace on `ipython`.
+## Features
 
-__Advantage over gdb plugins (like pwndbg)__
-
-- No gdb needed. 
-- No ptrace needed. Won't interrupt the process.
-- Implemented in pure python. No other module needed.
-- No symbols needed. (pwndbg need libc symbols to resolve `main_arena`)
-- Easy to use API.
-- Heap diff. (Working on it)
-- blablabla......  
-
+- Free of gdb and other requirement
+- Multi glibc support
+    - 2.19, 2.23-2.27 (currently tested)
+    - both 32bit and 64bit
+- Nice UI to show heap
+    - `HeapShower` (detailed)
+    - `PrettyPrinter` (colorful, summary)
+- Heapdiff (working)
+- Corruption detect & exploit analysis (working)
 
 # Usage
-
-__Now support multi glibc (tested on 2.23-2.27, both x64 and x86)__
 
 ## Quick shot
 
