@@ -140,3 +140,54 @@ def get_libc_info(libc_path):
     if info['version'] in ['2.26', '2.27', '2.28'] and arch == '32':
         info['main_arena_offset'] -= size_t
     return info
+
+
+def get_offset(binary, symbol):
+    '''Experimental function. Not used for now.
+
+    Args:
+        binary (str): Path to the binary.
+        symbol (str): Symbol to find.
+    Returns:
+        int: The offset(virtual) of the symbol.
+    '''
+    cmdline = 'objdump -j .data -d {}'.format(binary)
+    p = subprocess.Popen(
+        cmdline.split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+        )
+    out, err = p.communicate()
+    if p.returncode:
+        raise Exception(err)
+    pattern = '(\w+) <{}'.format(symbol)
+    result = re.findall(pattern, out)
+    if result:
+        addr = int(result[0], 16)
+        return addr
+    else:
+        raise Exception('Not found {} in {}'.format(symbol, binary))
+
+
+def get_main_arena_offset(libc):
+    '''Experimental funciton. Not used for now.
+
+    Note:
+        Origin:
+        https://github.com/bash-c/main_arena_offset/blob/master/main_arena
+	    32-bit: main_arena_offset = __malloc_hook_offset + 0x18
+	    64-bit:
+		main_arena_offset - __malloc_hook_offset =
+        (__realloc_hook_offset - __malloc_hook_offset) * 2
+    Args:
+        libc (str): Path to the libc.
+    Returns:
+        int: The offset(virtual) of the main arena.
+    '''
+    arch = get_arch(libc)
+    if arch == '32':
+        return get_offset(libc, '__malloc_hook') + 0x18
+    elif arch == '64':
+        malloc_hook = get_offset(libc, '__malloc_hook')
+        realloc_hook = get_offset(libc, '__realloc_hook')
+        return 2 * realloc_hook - malloc_hook
