@@ -127,7 +127,10 @@ class HeapInspector(object):
     def heapmem(self):
         '''str: heap memory dump.
         '''
-        start, end = self.proc.ranges['heap'][0]
+        try:
+            start, end = self.proc.ranges['heap'][0]
+        except IndexError:
+            raise Exception("Heap not initialized")
         return self.proc.read(start, end-start)
 
     @property
