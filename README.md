@@ -2,11 +2,7 @@
 
 _Pwnning is an art._
 
-Ever since I started to learn pwnning, I struggled a lot with the complicated, unpredictable heap of glibc.
-
-In the old days I was always seating in front of my computer, watching a full screen of hex codes in gdb.
-
-However, those days never come back. `HeapInspect` is designed to make `heap` much more prettier.
+`HeapInspect` is designed to make `heap` much more prettier.
 
 ## Features
 
@@ -19,6 +15,7 @@ However, those days never come back. `HeapInspect` is designed to make `heap` mu
     - `PrettyPrinter` (colorful, summary)
 - Heapdiff (working)
 - Corruption detect & exploit analysis (working)
+- Also support gdb :)
 
 # Usage
 
@@ -33,6 +30,17 @@ A quick use of this tool.
 ![raw1](img/raw1.png)
 
 ![rela1](img/rela1.png)
+
+You can also use it as a gdb plugin, very useful when `pwndbg` or other plugins failed to analysis heap.
+```sh
+sed -i "1i source `pwd`/gdbscript.py" ~/.gdbinit # alternatively, you can add that line manually
+```
+
+![gdb1](img/gdb1.png)
+
+![gdb2](img/gdb2.png)
+
+![gdb3](img/gdb3.png)
 
 
 ## Basic
@@ -98,6 +106,10 @@ Detailed docstrings have been written into the source code.
 I have built a sphinx doc in `docs`. Just open `docs/build/html/index.html` with your browser.
 
 # Devlog
+
+## 2018/12/10 Version 0.1.3
+
+- add support for gdb
 
 ## 2018/11/6 version 0.1.2
 
