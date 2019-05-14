@@ -39,25 +39,29 @@ if __name__ == '__main__':
         '../libs/libc-2.24/',
         '../libs/libc-2.25/', 
         '../libs/libc-2.26/', 
-        '../libs/libc-2.27/']
+        '../libs/libc-2.27/',
+        '../libs/libc-2.28/',
+        '../libs/libc-2.29/']
 
     for binary in testbins:
         binary32 = abspath(binary+'32')
         for case in testcases:
             dirname = os.path.join(abspath(case), '32bit')
-            p = create_process(dirname, binary32)
-            sleep(0.5)
-            show_all(p.pid)
-            raw_input('press enter')
-            p.terminate()
+            if os.path.exists(dirname):
+                p = create_process(dirname, binary32)
+                sleep(0.5)
+                show_all(p.pid)
+                raw_input('press enter')
+                p.terminate()
 
 
         
         binary64 = abspath(binary+'64')
         for case in testcases:
             dirname = os.path.join(abspath(case), '64bit')
-            p = create_process(dirname, binary64)
-            sleep(0.5)
-            show_all(p.pid)
-            raw_input('press enter')
-            p.terminate()
+            if os.path.exists(dirname):
+                p = create_process(dirname, binary64)
+                sleep(0.5)
+                show_all(p.pid)
+                raw_input('press enter')
+                p.terminate()
