@@ -72,6 +72,7 @@ def get_arena_info(libc_path, size_t=8):
     # libc name have to be libc.so.6
     shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6'))
     shutil.copy(ld_path, dir_path)
+    os.chmod(ld_path, 0b111000000) #rwx
 
     command = "{ld} --library-path {dir} {helper}".format(
         ld=ld_path, dir=dir_path, helper=helper_path)
