@@ -15,7 +15,7 @@ _Pwnning is an art._
     - `PrettyPrinter` (colorful, summary)
 - Heapdiff (working)
 - Corruption detect & exploit analysis (working)
-- Also support gdb :)
+- Also support gdb (python2 only) :)
 
 # Usage
 
@@ -35,6 +35,10 @@ You can also use it as a gdb plugin, very useful when `pwndbg` or other plugins 
 ```sh
 sed -i "1i source `pwd`/gdbscript.py" ~/.gdbinit # alternatively, you can add that line manually
 ```
+
+__Note__
+
+`HeapInspect` does not support `gdb python3` for now. Anyone who can make it `python3` compatible are welcome.
 
 ![gdb1](img/gdb1.png)
 
