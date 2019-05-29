@@ -4,6 +4,8 @@ _Pwnning is an art._
 
 `HeapInspect` is designed to make `heap` much more prettier.
 
+**Now this tool is a plugin of [nadbg](https://github.com/matrix1001/nadbg). Try it!**
+
 ## Features
 
 - Free of gdb and other requirement
