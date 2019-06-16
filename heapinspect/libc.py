@@ -46,8 +46,43 @@ def get_libc_version(path):
         return ""
 
 
-def get_arena_info(libc_path, size_t=8):
+def get_arena_info(libc_path, ld_path, size_t=8):
     '''Get the main arena infomation of the libc.
+
+    Args:
+        libc_path (str): Path to the libc.
+        size_t (int): 8 for 64 bit version, 4 for 32 bit.
+    Returns:
+        dict: like {'main_arena_offset':0x1e430, 'tcache_enable':False}
+    '''
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    if size_t == 8:
+        arch = '64'
+    else:
+        arch = '32'
+    libc_version = get_libc_version(libc_path)
+
+    dir_path = tempfile.mkdtemp()
+    # use this to build helper
+    # helper_path = build_helper(dir_path, size_t=size_t)
+    # # use pre-compiled binary
+    helper_path = "{dir}/libs/libc_info{arch}".format(dir=cur_dir, arch=arch)
+    # libc name have to be libc.so.6
+    shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6'))
+    shutil.copy(ld_path, dir_path)
+
+    command = "{ld} --library-path {dir} {helper}".format(
+        ld=ld_path, dir=dir_path, helper=helper_path)
+
+    result = subprocess.check_output(command.split())
+
+    shutil.rmtree(dir_path)
+    dc = json.JSONDecoder()
+    return dc.decode(result)
+
+
+def get_arena_info2(libc_path, size_t=8):
+    '''Get the main arena infomation of the libc. (without ld.so)
 
     Args:
         libc_path (str): Path to the libc.
@@ -114,11 +149,12 @@ def get_arch(path):
             )
 
 
-def get_libc_info(libc_path):
+def get_libc_info(libc_path, ld_path):
     '''Get the infomation of the libc.
     
     Args:
         libc_path (str): Path to the libc.
+        ld_path (str): Path to the ld.
     Returns:
         dict: like {'main_arena_offset':0x1e430, 'tcache_enable':True,
             'version':2.27}
@@ -131,7 +167,7 @@ def get_libc_info(libc_path):
     else:
         raise NotImplementedError
     info = {'version': get_libc_version(libc_path)}
-    info.update(get_arena_info(libc_path, size_t))
+    info.update(get_arena_info(libc_path, ld_path, size_t))
 
     # malloc_state adjust
     if info['version'] in ['2.27', '2.28']:

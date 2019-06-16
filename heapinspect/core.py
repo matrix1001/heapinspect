@@ -78,6 +78,7 @@ class HeapInspector(object):
         self.arch = self.proc.arch
         self.path = self.proc.path
         self.libc_path = self.proc.libc
+        self.ld_path = self.proc.ld
 
         if self.arch == '32':
             self.size_t = 4
@@ -90,7 +91,7 @@ class HeapInspector(object):
         else:
             raise NotImplementedError('invalid arch')
 
-        libc_info = get_libc_info(self.libc_path)
+        libc_info = get_libc_info(self.libc_path, self.proc.ld)
         self.libc_version = libc_info['version']
         self.tcache_enable = libc_info['tcache_enable']
         self.main_arena_offset = libc_info['main_arena_offset']

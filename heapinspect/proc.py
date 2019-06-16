@@ -40,6 +40,8 @@ Note:
     The glibc basename should be like libc.so.6, libc-2.23.so, libc.so.
 '''
 
+LD_REGEX = '^[^\0]*ld(?:-[\d\.]+)?\.so(?:\.6)?$'
+
 
 class Map(object):
     '''A class for recording one virtual memory map of a process.
@@ -461,3 +463,15 @@ class Proc(object):
             if re.match(LIBC_REGEX, m.mapname):
                 return m.mapname
         raise Exception('cannot find libc path')
+
+    @property
+    def ld(self):
+        '''str: The path to the ld.so of the process.
+
+        Raises:
+            Exception: if cannot find ld path.
+        '''
+        for m in vmmap(self.pid):
+            if re.match(LD_REGEX, m.mapname):
+                return m.mapname
+        raise Exception('cannot find ld path')
