@@ -17,7 +17,8 @@ _Pwnning is an art._
     - `PrettyPrinter` (colorful, summary)
 - Heapdiff (working)
 - Corruption detect & exploit analysis (working)
-- Also support gdb (python2 only) :)
+- Also support gdb
+- Python2 & Python3 compatible
 
 # Usage
 
@@ -40,7 +41,6 @@ sed -i "1i source `pwd`/gdbscript.py" ~/.gdbinit # alternatively, you can add th
 
 __Note__
 
-`HeapInspect` does not support `gdb python3` for now. Anyone who can make it `python3` compatible are welcome.
 
 ![gdb1](img/gdb1.png)
 
@@ -112,6 +112,10 @@ Detailed docstrings have been written into the source code.
 I have built a sphinx doc in `docs`. Just open `docs/build/html/index.html` with your browser.
 
 # Devlog
+
+## 2018/12/10 Version 0.1.4
+
+- python3 support
 
 ## 2018/12/10 Version 0.1.3
 
