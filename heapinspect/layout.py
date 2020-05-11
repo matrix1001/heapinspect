@@ -1,5 +1,5 @@
-from auxiliary.ezcolor import color
-from auxiliary.utils import terminal_size
+from heapinspect.auxiliary.ezcolor import color
+from heapinspect.auxiliary.utils import terminal_size
 
 
 class HeapShower(object):

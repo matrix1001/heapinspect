@@ -1,50 +1,9 @@
-import struct
 import re
 
-
-def u64(data):
-    '''Unpack 64bit data with little endian.
-
-    Args:
-        data (str): Data to unpack.
-    Return:
-        int: Unpacked value.
-    '''
-    return struct.unpack('<Q', data.ljust(8, '\0'))[0]
-
-
-def u32(data):
-    '''Unpack 32bit data with little endian.
-
-    Args:
-        data (str): Data to unpack.
-    Return:
-        int: Unpacked value.
-    '''
-    return struct.unpack('<I', data.ljust(4, '\0'))[0]
-
-
-def p64(i):
-    '''Unpack 64bit int with little endian to data.
-
-    Args:
-        int: Value to pack.
-    Return:
-        data (str): Packed data.
-    '''
-    return struct.pack('<Q', i)
-
-
-def p32(i):
-    '''Unpack 32bit int with little endian to data.
-
-    Args:
-        int: Value to pack.
-    Return:
-        data (str): Packed data.
-    '''
-    return struct.pack('<I', i)
-
+from heapinspect.common import u64
+from heapinspect.common import u32
+from heapinspect.common import p64
+from heapinspect.common import p32
 
 class C_Struct(object):
     '''This class handles memory dump of c structure.
@@ -186,7 +145,7 @@ class C_Struct(object):
         '''
         # assert len(memdump) >= self.size
         if len(memdump) < self._size:
-            memdump.ljust(self._size, '\0')
+            memdump.ljust(self._size, b'\0')
         for v in self._vars:
             typ, name, num = v
             offset = self._offset(name)

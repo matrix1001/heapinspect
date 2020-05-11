@@ -3,8 +3,7 @@ import os
 import six
 import codecs
 
-#from heapinspect.common import get_arch
-from common import get_arch
+from heapinspect.common import get_arch
 
 LIBC_REGEX = '^[^\0]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
 '''str: The regex to match glibc.
