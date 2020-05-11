@@ -6,10 +6,11 @@ from time import sleep
 import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir) 
+pparentdir = os.path.dirname(parentdir)
+sys.path.insert(0,pparentdir) 
 
 # import from parentdir
-from core import *
+from heapinspect.core import *
 
 def create_process(dir_path, file_path):
     ld_path = os.path.join(dir_path, 'ld.so.2')
@@ -51,7 +52,10 @@ if __name__ == '__main__':
                 p = create_process(dirname, binary32)
                 sleep(0.5)
                 show_all(p.pid)
-                raw_input('press enter')
+                try:
+                    raw_input('press enter')
+                except:
+                    input('press enter')
                 p.terminate()
 
 
@@ -63,5 +67,8 @@ if __name__ == '__main__':
                 p = create_process(dirname, binary64)
                 sleep(0.5)
                 show_all(p.pid)
-                raw_input('press enter')
+                try:
+                    raw_input('press enter')
+                except:
+                    input('press enter')
                 p.terminate()
