@@ -145,6 +145,8 @@ class C_Struct(object):
         '''
         # assert len(memdump) >= self.size
         if len(memdump) < self._size:
+            if type(memdump) == str:
+                memdump = bytes(memdump, 'utf-8')
             memdump.ljust(self._size, b'\0')
         for v in self._vars:
             typ, name, num = v
