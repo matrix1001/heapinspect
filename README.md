@@ -113,7 +113,7 @@ I have built a sphinx doc in `docs`. Just open `docs/build/html/index.html` with
 
 # Devlog
 
-## 2018/12/10 Version 0.1.4
+## 2020/5/11 Version 0.1.4
 
 - python3 support
 
