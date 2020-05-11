@@ -3,35 +3,8 @@ import os
 import six
 import codecs
 
-
-def get_arch(path):
-    '''
-    Get the arch of the binary.
-
-    Args:
-        path (str): The absolute/relative path to the binary.
-    Returns:
-        str: the arch of the binary, 32 or 64.
-    Raises:
-        NotImplememtedError: if the arch is not x86 or x64.
-    Examples:
-        >>> print(get_arch('/bin/sh'))
-        64
-        >>> print(get_arch('./a_32bit_bin'))
-        32
-    '''
-    with open(path) as f:
-        arch_code = ord(f.read(0x13)[-1])
-    x86_mcode = [3, ]  # i386 only
-    x64_mcode = [62, ]  # amd64 only
-    if arch_code in x86_mcode:
-        return '32'
-    elif arch_code in x64_mcode:
-        return '64'
-    else:
-        raise NotImplementedError(
-            'none supported arch. code {}'.format(arch_code)
-            )
+#from heapinspect.common import get_arch
+from common import get_arch
 
 LIBC_REGEX = '^[^\0]*libc(?:-[\d\.]+)?\.so(?:\.6)?$'
 '''str: The regex to match glibc.
@@ -294,7 +267,7 @@ class Proc(object):
             str: The readed memory. return '' if error.
         '''
         mem = "/proc/{}/mem".format(self.pid)
-        f = open(mem)
+        f = open(mem, 'rb')
         f.seek(addr)
         try:
             result = f.read(size)
@@ -353,8 +326,9 @@ class Proc(object):
             list: Search result.
         '''
         result = []
+        ignore_list = ['[vvar]', '[vsyscall]']
         for m in vmmap(self.pid):
-            if "r" in m.perm:
+            if "r" in m.perm and m.mapname not in ignore_list:
                 result += self.searchmem(m.start, m.end, search)
         return result
 
