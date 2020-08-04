@@ -55,7 +55,7 @@ Pretty easy to use. I will make it a package later.
 
 ```python
 from heapinspect.core import *
-hi = HeapInspect(1234)       #pid here
+hi = HeapInspector(1234)       #pid here
 hs = HeapShower(hi)
 
 print(hs.fastbins)
