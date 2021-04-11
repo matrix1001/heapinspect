@@ -1,4 +1,10 @@
-# HeapInspect
+# PANDAHeapInspect
+
+I'm not chaginging the real README. Just adding a note. I modified HeapInspect to work with PANDA. It was kinda neat.
+
+This isn't a supported project. Just a thing I thought was neat.
+
+
 
 _Pwnning is an art._
 

@@ -39,17 +39,17 @@ def get_libc_version(path):
     Returns:
         str: Libc version. Like '2.29', '2.26' ...
     '''
-    content = subprocess.Popen(['strings', path], stdout=subprocess.PIPE).stdout.read()
-    content = content.decode() #py3 problem
+    #content = subprocess.Popen(['strings', path], stdout=subprocess.PIPE).stdout.read()
+    #content = content.decode() #py3 problem
     pattern = "libc[- ]([0-9]+\.[0-9]+)"
-    result = re.findall(pattern, content)
+    result = re.findall(pattern, path)
     if result:
         return result[0]
     else:
         return ""
 
 
-def get_arena_info(libc_path, ld_path):
+def get_arena_info(arch,libc_path, ld_path):
     '''Get the main arena infomation of the libc.
 
     Args:
@@ -58,24 +58,27 @@ def get_arena_info(libc_path, ld_path):
     Returns:
         dict: like {'main_arena_offset':0x1e430, 'tcache_enable':False}
     '''
-    cur_dir = os.path.dirname(os.path.realpath(__file__))
-    arch = get_arch(libc_path)
-    libc_version = get_libc_version(libc_path)
-    dir_path = tempfile.mkdtemp()
-    # use this to build helper
-    # helper_path = build_helper(dir_path, size_t=size_t)
-    # # use pre-compiled binary
-    helper_path = "{dir}/libs/libc_info{arch}".format(dir=cur_dir, arch=arch)
-    # libc name have to be libc.so.6
-    shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6'))
-    shutil.copy(ld_path, dir_path)
-    command = "{ld} --library-path {dir} {helper}".format(
-        ld=ld_path, dir=dir_path, helper=helper_path)
-    result = subprocess.check_output(command.split())
-    result = result.decode() #py3 problem
-    shutil.rmtree(dir_path)
-    dc = json.JSONDecoder()
-    return dc.decode(result)
+    # TODO: This is wrong.
+    return {"main_arena_offset": 4111432,"tcache_enable": True}
+    #cur_dir = os.path.dirname(os.path.realpath(__file__))
+    ##arch = get_arch(libc_path)
+    #libc_version = get_libc_version(libc_path)
+    #dir_path = tempfile.mkdtemp()
+    ## use this to build helper
+    ## helper_path = build_helper(dir_path, size_t=size_t)
+    ## # use pre-compiled binary
+    #print(f"LD IS {ld_path}")
+    #helper_path = "{dir}/libs/libc_info{arch}".format(dir=cur_dir, arch=arch)
+    ## libc name have to be libc.so.6
+    #shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6'))
+    #shutil.copy(ld_path, dir_path)
+    #command = "{ld} --library-path {dir} {helper}".format(
+    #    ld=ld_path, dir=dir_path, helper=helper_path)
+    #result = subprocess.check_output(command.split())
+    #result = result.decode() #py3 problem
+    #shutil.rmtree(dir_path)
+    #dc = json.JSONDecoder()
+    #return dc.decode(result)
 
 
 #def get_arena_info2(libc_path):
@@ -113,7 +116,7 @@ def get_arena_info(libc_path, ld_path):
 #    dc = json.JSONDecoder()
 #    return dc.decode(result)
 
-def get_libc_info(libc_path, ld_path):
+def get_libc_info(arch,libc_path, ld_path):
     '''Get the infomation of the libc.
     
     Args:
@@ -123,7 +126,7 @@ def get_libc_info(libc_path, ld_path):
         dict: like {'main_arena_offset':0x1e430, 'tcache_enable':True,
             'version':2.27}
     '''
-    arch = get_arch(libc_path)
+    #arch = get_arch(libc_path)
     if arch == '64':
         size_t = 8
     elif arch == '32':
@@ -131,7 +134,7 @@ def get_libc_info(libc_path, ld_path):
     else:
         raise NotImplementedError
     info = {'version': get_libc_version(libc_path)}
-    info.update(get_arena_info(libc_path, ld_path))
+    info.update(get_arena_info(arch,libc_path, ld_path))
     # malloc_state adjust
     if info['version'] in ['2.27', '2.28']:
         info['main_arena_offset'] -= size_t
