@@ -32,10 +32,10 @@ class HeapInspector(object):
     Raises:
         NotImplementedError: for none supported arch.
     '''
-    def __init__(self, panda, asid, arena_info):
+    def __init__(self, pid, panda=None, arena_info=None):
+        self.pid = pid
         self.panda = panda
-        self.pid = asid # not a PID, but not NOT a PID
-        self.proc = Proc(panda,asid)
+        self.proc = Proc(pid, panda)
         self.arch = self.proc.arch
         self.path = self.proc.path
         self.libc_path = self.proc.libc

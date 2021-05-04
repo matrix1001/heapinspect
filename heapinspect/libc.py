@@ -65,7 +65,6 @@ def get_arena_info(arch,libc_path, ld_path):
     # use this to build helper
     # helper_path = build_helper(dir_path, size_t=size_t)
     # # use pre-compiled binary
-    print(f"LD IS {ld_path}")
     helper_path = "{dir}/libs/libc_info{arch}".format(dir=cur_dir, arch=arch)
     # libc name have to be libc.so.6
     shutil.copy(libc_path, os.path.join(dir_path, 'libc.so.6'))
@@ -114,7 +113,7 @@ def get_arena_info(arch,libc_path, ld_path):
 #    dc = json.JSONDecoder()
 #    return dc.decode(result)
 
-def get_libc_info(arch,libc_path, ld_path, arena_info):
+def get_libc_info(arch,libc_path, ld_path, arena_info=None):
     '''Get the infomation of the libc.
     
     Args:
@@ -132,7 +131,10 @@ def get_libc_info(arch,libc_path, ld_path, arena_info):
     else:
         raise NotImplementedError
     info = {'version': get_libc_version(libc_path)}
-    info.update(arena_info)
+    if arena_info:
+        info.update(arena_info)
+    else:
+        info.update(get_arena_info(arch, libc_path,ld_path))
     # malloc_state adjust
     if info['version'] in ['2.27', '2.28']:
         info['main_arena_offset'] -= size_t
