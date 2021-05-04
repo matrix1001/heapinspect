@@ -62,7 +62,8 @@ def get_arena_info(arch,libc_path, ld_path, panda=None):
         dict: like {'main_arena_offset':0x1e430, 'tcache_enable':False}
     '''
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    #arch = get_arch(libc_path)
+    if not panda:
+        arch = get_arch(libc_path)
     libc_version = get_libc_version(libc_path,panda=panda)
     dir_path = tempfile.mkdtemp()
     # use this to build helper
