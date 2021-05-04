@@ -58,7 +58,7 @@ class Map(object):
         return addr >= self.start and addr < self.end
 
 
-def vmmap(pid):
+def vmmap(pid, panda = None):
     '''Get the vmmap of a process.
 
     Note:
@@ -70,20 +70,25 @@ def vmmap(pid):
     '''
 
     maps = []
-    mpath = "/proc/%s/maps" % pid
-    # 00400000-0040b000 r-xp 00000000 08:02 538840  /path/to/file
-    pattern = re.compile(
-        "([0-9a-f]*)-([0-9a-f]*) ([rwxps-]*)(?: [^ ]*){3} *(.*)"
-        )
-    out = open(mpath).read()
-    matches = pattern.findall(out)
-    if matches:
-        for (start, end, perm, mapname) in matches:
-            start = int("0x%s" % start, 16)
-            end = int("0x%s" % end, 16)
-            if mapname == "":
-                mapname = "mapped"
-            maps.append(Map(start, end, perm, mapname))
+    if panda:
+        for mapping in panda.get_mappings(panda.get_cpu()):
+            # we don't know the permissions
+            maps.append(Map(mapping.base, mapping.base+mapping.size, 'rwx', panda.ffi.string(mapping.name).decode()))
+    else:
+        mpath = "/proc/%s/maps" % pid
+        # 00400000-0040b000 r-xp 00000000 08:02 538840  /path/to/file
+        pattern = re.compile(
+            "([0-9a-f]*)-([0-9a-f]*) ([rwxps-]*)(?: [^ ]*){3} *(.*)"
+            )
+        out = open(mpath).read()
+        matches = pattern.findall(out)
+        if matches:
+            for (start, end, perm, mapname) in matches:
+                start = int("0x%s" % start, 16)
+                end = int("0x%s" % end, 16)
+                if mapname == "":
+                    mapname = "mapped"
+                maps.append(Map(start, end, perm, mapname))
     return maps
 
 
@@ -96,21 +101,32 @@ class Proc(object):
     Args:
         pid (int): The pid of the process.
     '''
-    def __init__(self, pid):
+    def __init__(self, pid, panda=None):
         self.pid = pid
-        self.arch = get_arch(self.path)
+        self.panda = panda # even if none
+        if self.panda:
+            if self.panda.arch_name == "i386":  #get_arch(self.path)
+                self.arch = '32'
+            elif self.panda.arch_name == "x86_64":
+                self.arch = '64'
+            else:
+                raise NotImplementedError("Other architectures probably work, but just haven't checked")
+        else:
+            self.arch = get_arch(self.path)
 
     @property
     def path(self):
         '''str: The path to the binary of the process.
         '''
+        if self.panda:
+            return "panda"
         return os.path.realpath("/proc/{}/exe".format(self.pid))
 
     @property
     def vmmap(self):
         '''list(`Map`): The vmmap of the process.
         '''
-        return vmmap(self.pid)
+        return vmmap(self.pid, self.panda)
 
     def _range_merge(self, lst, range_vec):
         merged = 0
@@ -265,16 +281,34 @@ class Proc(object):
         Returns:
             str: The readed memory. return '' if error.
         '''
-        mem = "/proc/{}/mem".format(self.pid)
-        f = open(mem, 'rb')
-        f.seek(addr)
-        try:
-            result = f.read(size)
-        except:
-            result = ""
-            print("error reading: {}:{}".format(hex(addr), hex(size)))
-        f.close()
-        return result
+        if self.panda:
+            any_output = False
+            output = b""
+            while len(output) < size:
+                try:
+                    cpu = self.panda.get_cpu()
+                    if size > 0x1000:
+                        output += self.panda.virtual_memory_read(cpu, addr, 0x1000)
+                    else:
+                        output += self.panda.virtual_memory_read(cpu, addr, size-len(output))
+                    any_output = True
+                except:
+                    #print(f"couldn't read {addr:x}-{addr+0x1000:x}")
+                    output += b"\x00"*0x1000
+                addr += 0x1000
+            return output if any_output else ''
+        else:
+            mem = "/proc/{}/mem".format(self.pid)
+            f = open(mem, 'rb')
+            f.seek(addr)
+            try:
+                result = f.read(size)
+            except:
+                result = ""
+                print("error reading: {}:{}".format(hex(addr), hex(size)))
+            f.close()
+            return result
+
 
     def search_in_prog(self, search):
         '''Search in prog.
@@ -326,7 +360,7 @@ class Proc(object):
         '''
         result = []
         ignore_list = ['[vvar]', '[vsyscall]']
-        for m in vmmap(self.pid):
+        for m in vmmap(self.panda,self.pid):
             if "r" in m.perm and m.mapname not in ignore_list:
                 result += self.searchmem(m.start, m.end, search)
         return result
@@ -342,7 +376,7 @@ class Proc(object):
         '''
         result = []
         maps = []
-        for m in vmmap(self.pid):
+        for m in vmmap(self.panda,self.pid):
             if m.mapname == mapname:
                 maps.append(m)
         for m in maps:
@@ -432,7 +466,7 @@ class Proc(object):
         Raises:
             Exception: if cannot find the glibc.
         '''
-        for m in vmmap(self.pid):
+        for m in vmmap(self.pid,panda=self.panda):
             if re.match(LIBC_REGEX, m.mapname):
                 return m.mapname
         raise Exception('cannot find libc path')
@@ -444,7 +478,7 @@ class Proc(object):
         Raises:
             Exception: if cannot find ld path.
         '''
-        for m in vmmap(self.pid):
+        for m in vmmap(self.pid,panda=self.panda):
             if re.match(LD_REGEX, m.mapname):
                 return m.mapname
         raise Exception('cannot find ld path')
