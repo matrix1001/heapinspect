@@ -32,7 +32,7 @@ class HeapInspector(object):
     Raises:
         NotImplementedError: for none supported arch.
     '''
-    def __init__(self, panda, asid):
+    def __init__(self, panda, asid, arena_info):
         self.panda = panda
         self.pid = asid # not a PID, but not NOT a PID
         self.proc = Proc(panda,asid)
@@ -52,7 +52,7 @@ class HeapInspector(object):
         else:
             raise NotImplementedError('invalid arch')
 
-        libc_info = get_libc_info(self.proc.arch,self.libc_path, self.proc.ld)
+        libc_info = get_libc_info(self.proc.arch,self.libc_path, self.proc.ld,arena_info)
         self.libc_version = libc_info['version']
         self.tcache_enable = libc_info['tcache_enable']
         self.main_arena_offset = libc_info['main_arena_offset']
